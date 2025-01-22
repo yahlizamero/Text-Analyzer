@@ -1,0 +1,20 @@
+- main
+
+	- process command (get the command and the arguments and call the right fuction)
+
+	- validation
+
+		and then go to:
+		- preprocessing
+		- counting sequences
+		- counting person mentions
+		- search engine
+		- k-sequences
+		- connections
+		- indirect connections
+
+utils file
+<!-- usage: from utils import [function name | *] -->
+
+
+ctrl+tab 
