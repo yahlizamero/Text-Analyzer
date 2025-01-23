@@ -1,3 +1,6 @@
+# Description:
+# This file contains the implementation of the preprocessing task for the text analyzer project.
+# Includes functionality for cleaning sentences and processing names.
 
 import json
 import csv
@@ -6,7 +9,6 @@ from typing import List, Dict, Any, Set
 from utils.helper_functions import load_stopwords, clean_text, is_duplicate_or_overlap, split_name
 
 
-# Preprocessing class
 class Preprocessing:
     def __init__(self, question_num: int, sentences_path: str, people_path: str, stopwords_path: str) -> None:
         self.question_num = question_num
