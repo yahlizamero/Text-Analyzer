@@ -1,98 +1,89 @@
-# Description:
-# This file contains the implementation of the preprocessing task for the text analyzer project.
-# Includes functionality for cleaning sentences and processing names.
+
+import json
 import csv
-import re
-from typing import List, Dict, Any
-from utils.helper_functions import load_stopwords
+import os
+from typing import List, Dict, Any, Set
+from utils.helper_functions import load_stopwords, clean_text, is_duplicate_or_overlap, split_name
 
 
+# Preprocessing class
 class Preprocessing:
     def __init__(self, question_num: int, sentences_path: str, people_path: str, stopwords_path: str) -> None:
-        """
-        Initialize the preprocessor with file paths.
-        Args:
-            question_num (int): The task number. (1 in this case).
-            sentences_path (str): Path to the sentences CSV file.
-            people_path (str): Path to the people CSV file.
-            stopwords_path (str): Path to the stopwords CSV file.
-        """
         self.question_num = question_num
         self.sentences_path = sentences_path
         self.people_path = people_path
         self.stopwords = load_stopwords(stopwords_path)
 
     def preprocess_sentences(self) -> List[List[str]]:
-        """
-        Preprocess sentences by removing punctuation, stopwords, and whitespaces.
-        Returns:
-            List[List[str]]: A list of cleaned sentences.
-        """
         processed_sentences = []
-        with open(self.sentences_path, 'r') as file:
+        with open(self.sentences_path, "r") as file:
             reader = csv.DictReader(file)
             for row in reader:
-                sentence = row['sentence'].lower()
-                sentence = re.sub(r'[^a-z0-9\s]', ' ', sentence)  # Remove punctuation
-                words = [word for word in sentence.split() if word not in self.stopwords]  # Remove stopwords,
-                # whitespaces
-                if words:  # Skips empty sentences
-                    processed_sentences.append(words)
+                sentence = clean_text(row['sentence'], self.stopwords)
+                if sentence:  # Skip empty sentences
+                    processed_sentences.append(sentence.split())
         return processed_sentences
 
-    def preprocess_people(self) -> List[Dict[str, Any]]:
-        """
-        Preprocess people by cleaning names and their nicknames.
-        Returns:
-            List[Dict[str, Any]]: A list of dictionaries with main names and nicknames.
-        """
+    def preprocess_people(self) -> List[List[List[Any]]]:
         processed_people = []
         seen_names = set()
 
-        with open(self.people_path, 'r') as file:
+        with open(self.people_path, "r") as file:
             reader = csv.DictReader(file)
             for row in reader:
-                main_name = row['Name'].strip().lower()
-                main_name = re.sub(r'[^a-z0-9\s]', ' ', main_name)  # Remove punctuation
-                main_name = re.sub(r'\s+', ' ', main_name).strip()  # Remove consecutive whitespaces and trim
+                main_name = clean_text(row['Name'], self.stopwords)
+                if not main_name:  # Skip empty names
+                    continue
 
-                if main_name in seen_names:
-                    continue  # Skip duplicate names
+                raw_other_names = row['Other Names'].strip().split(',') if row['Other Names'].strip() else []
+                raw_other_names = [name.strip() for name in raw_other_names]
+                other_names = [clean_text(name, self.stopwords) for name in raw_other_names]
+                other_names = [name for name in other_names if name]
+
+                main_name_split = split_name(main_name)
+                other_names_split = [split_name(name) if " " in name else [name] for name in other_names]
+
+                if is_duplicate_or_overlap(main_name, other_names, seen_names):
+                    continue
+
                 seen_names.add(main_name)
+                seen_names.update(other_names)
 
-                other_names = [name.strip().lower() for name in row['Other Names'].split(',')]
-                other_names = [re.sub(r'[^a-z0-9\s]', ' ', name) for name in other_names]  # Remove punctuation
-                other_names = [re.sub(r'\s+', ' ', name).strip() for name in
-                               other_names]  # Remove consecutive whitespaces and trim
-                other_names = [name for name in other_names if name]  # Remove empty names
-
-                processed_people.append({"name": main_name, "other_names": other_names})
-
+                # Add cleaned data as lists, ensure empty nickname lists if none exist
+                processed_people.append([main_name_split, other_names_split if other_names_split else []])
         return processed_people
 
     def preprocess(self) -> Dict[str, Any]:
-        """
-        Run the complete preprocessing pipeline.
-        Returns:
-            Dict[str, Any]: A dictionary containing processed sentences and people.
-        """
         return {
-            "Processed Sentences": self.preprocess_sentences(),
-            "Processed Names": self.preprocess_people()
+            f"Question {self.question_num}": {
+                "Processed Sentences": self.preprocess_sentences(),
+                "Processed Names": self.preprocess_people()
+            }
         }
 
+    def save_to_json(self, output_path: str) -> None:
+        processed_data = self.preprocess()
+        with open(output_path, "w") as file:
+            json.dump(processed_data, file, indent=4)
 
-# Example Usage
+
+# Example usage
 if __name__ == "__main__":
-    # Replace with actual file paths
-    sentences_path = "sentences.csv"
-    people_path = "people.csv"
-    stopwords_path = "stopwords.csv"
+    sentences_file = "/Users/YAHLIZ/Library/CloudStorage/GoogleDrive-yahli.zamero@mail.huji.ac.il/My Drive/Intro to CS/text_analyzer/examples/Q1_examples/example_2/sentences_small_2.csv"
+    people_file = "/Users/YAHLIZ/Library/CloudStorage/GoogleDrive-yahli.zamero@mail.huji.ac.il/My Drive/Intro to CS/text_analyzer/examples/Q1_examples/example_2/people_small_2.csv"
+    stopwords_file = "/Users/YAHLIZ/Library/CloudStorage/GoogleDrive-yahli.zamero@mail.huji.ac.il/My Drive/Intro to CS/text_analyzer/data/REMOVEWORDS.csv"
+    output_file = "/Users/YAHLIZ/Library/CloudStorage/GoogleDrive-yahli.zamero@mail.huji.ac.il/My Drive/Intro to CS/text_analyzer/examples/Q1_examples/example_2/generated_Q2_result.json"
 
-    preprocessor = Preprocessing(sentences_path, people_path, stopwords_path)
-    result = preprocessor.preprocess()
+    # Check if required files exist
+    for file_path in [sentences_file, people_file, stopwords_file]:
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"Required file not found: {file_path}")
 
-    # Print the result in JSON format
-    import json
-
-    print(json.dumps(result, indent=2))
+    preprocessor = Preprocessing(
+        question_num=1,
+        sentences_path=sentences_file,
+        people_path=people_file,
+        stopwords_path=stopwords_file
+    )
+    preprocessor.save_to_json(output_file)
+    print(f"JSON results saved to {output_file}")
