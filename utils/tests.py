@@ -1,1 +1,0 @@
-# here we will write all the tests for each of the parts of the project

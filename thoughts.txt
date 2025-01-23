@@ -17,4 +17,12 @@ utils file
 <!-- usage: from utils import [function name | *] -->
 
 
-ctrl+tab 
+ctrl+tab - to move between recently used files
+
+
+Once in the right location:
+to push new changes to github:
+1. git status
+2. git add .
+3. git commit -m "commit message"
+4. git push

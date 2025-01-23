@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
-from task_implementation.preprocessing import Preprocessing
+from task_implementation.Task_1_Preprocessing import Preprocessing as Task1
 
 
 def readargs(args=None):
