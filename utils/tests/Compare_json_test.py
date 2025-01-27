@@ -28,6 +28,6 @@ def compare_json_files(file1_path, file2_path):
 
 # Example usage
 if __name__ == "__main__":
-    file1_path = "/Users/YAHLIZ/Library/CloudStorage/GoogleDrive-yahli.zamero@mail.huji.ac.il/My Drive/Intro to CS/text_analyzer/examples/Q1_examples/example_2/Q1_result2.json"
-    file2_path = "/Users/YAHLIZ/Library/CloudStorage/GoogleDrive-yahli.zamero@mail.huji.ac.il/My Drive/Intro to CS/text_analyzer/examples/Q1_examples/example_2/generated_Q2_result.json"
+    file1_path = "examples 27.1/Q1_examples/example_1/Q1_result1.json"
+    file2_path = "examples 27.1/Q1_examples/example_1/Gen_result_Q1_1.json"
     compare_json_files(file1_path, file2_path)

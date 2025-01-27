@@ -6,7 +6,7 @@
 
 		and then go to:
 		- preprocessing
-		- counting sequences
+		- counting sequences - fix outputs and compare, see why with processed data file it doesn't work
 		- counting person mentions
 		- search engine
 		- k-sequences
