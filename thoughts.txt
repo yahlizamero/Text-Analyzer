@@ -5,9 +5,9 @@
 	- validation
 
 		and then go to:
-		- preprocessing
-		- counting sequences - fix outputs and compare, see why with processed data file it doesn't work
-		- counting person mentions
+		- preprocessing - works on all examples
+		- counting sequences - works on all examples
+		- counting person mentions - works on all examples
 		- search engine
 		- k-sequences
 		- connections

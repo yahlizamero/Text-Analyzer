@@ -1,21 +1,36 @@
-# Description: This script counts the mentions of each person in the processed sentences.
-# The PersonMentionCounter class preprocesses the input data and counts the mentions of each person.
-# The results are saved to a JSON file.
+# Description:
+# This script counts the mentions of each person in a given text.
+# The PersonMentionCounter class preprocesses the input data if necessary and counts the mentions of each person.
 
 import json
-import os
-from typing import List, Dict, Any
-from utils.helper_Task2 import save_to_json,load_preprocessed_data, preprocess_data
+from collections import defaultdict
+from typing import Dict, Any
+from task_implementation.Task_1_Preprocessing import Preprocessing
+
+
+def load_data(data_file: str) -> Dict[str, Any]:
+    """
+    Load preprocessed data from a JSON file.
+
+    :param data_file: Path to the preprocessed JSON file.
+    :return: The loaded data as a dictionary.
+    """
+    try:
+        with open(data_file, "r") as file:
+            return json.load(file)
+    except Exception as e:
+        raise FileNotFoundError(f"Error loading data file: {e}")
 
 
 class PersonMentionCounter:
     def __init__(
             self,
+            question_num: int = 3,
             data_file: str = None,
             sentences_path: str = None,
             people_path: str = None,
             stopwords_path: str = None,
-            preprocess: bool = False
+            preprocess: str = None,
     ):
         """
         Initialize the PersonMentionCounter class.
@@ -26,80 +41,110 @@ class PersonMentionCounter:
         :param stopwords_path: Path to the stopwords CSV file.
         :param preprocess: Flag indicating if preprocessing is required.
         """
-        self.preprocess = preprocess
+        self.question_num = question_num
 
-        if self.preprocess and (not sentences_path or not people_path or not stopwords_path):
-            raise ValueError("Sentences, people, and stopwords paths must be provided if preprocessing is enabled.")
+        # If there is a preprocess flag, load data directly from the preprocessed file
+        if preprocess == "--p":
+            if not data_file:
+                raise ValueError("A data file must be provided when preprocess flag provided.")
+            self.data = load_data(data_file)
 
-        self.data = (
-            self.load_preprocessed_data(data_file)
-            if data_file and not preprocess
-            else preprocess_data(sentences_path, people_path, stopwords_path)
-        )
+        # If there is no preprocess flag, preprocess the raw input files
+        else:
+            if not sentences_path or not people_path or not stopwords_path:
+                raise ValueError("Sentences, people, and stopwords paths must be provided when preprocess=None.")
+            self.data = Preprocessing.preprocess_other_tasks(
+                sentences_path=sentences_path,
+                people_path=people_path,
+                stopwords_path=stopwords_path
+            )
 
-    def count_person_mentions(self) -> Dict[str, int]:
+    @property
+    def count_mentions(self) -> Dict[str, int]:
         """
-        Count mentions of each person in the processed sentences.
+        Count the mentions of each person in the processed sentences.
 
-        :return: A dictionary where keys are names and values are counts of mentions.
+        :return: A dictionary with person names as keys and their mention counts as values.
         """
-        mention_counts = {}
-        sentences = self.data["Processed Sentences"]
-        people = self.data["Processed Names"]
+        # If the data is preprocessed, load the processed sentences and people
+        processed_sentences = (self.data.get("Question 1", {}).get("Processed Sentences", [])
+                               if "Question 1" in self.data
+                               else self.data.get("Processed Sentences", []))
 
-        for person in people:
-            main_name = person[0]  # Main name
-            alternate_names = person[1:]  # Alternate names
+        processed_people = (self.data.get("Question 1", {}).get("Processed Names", [])
+                            if "Question 1" in self.data
+                            else self.data.get("Processed Names", []))
 
-            # Build a set of all names for the person (main + alternate)
-            all_names = set([main_name] + alternate_names)
+        # If the data is not preprocessed, preprocess the sentences and people
+        if not processed_sentences or not processed_people:
+            raise ValueError("The provided data does not contain valid 'Processed Sentences' or 'Processed Names'.")
 
-            # Count mentions for all names in the sentences
-            count = 0
-            for sentence in sentences:
-                for word in sentence:
-                    if word in all_names:
-                        count += 1
+        mention_counts = defaultdict(int)
 
-            if count > 0:
-                mention_counts[main_name] = count
+        # Create a dictionary of main names to their nicknames
+        name_to_nicknames = {
+            " ".join(person[0]).lower(): {  # Main name
+                                             " ".join(name).lower() for name in person[1]
+                                         } | {" ".join(person[0]).lower()}  # Add main name to nicknames set
+            for person in processed_people
+        }
 
-        return mention_counts
+        # Count mentions of each main name and its nicknames in sentences
+        for sentence in processed_sentences:
+            sentence_partials = [partial.lower() for partial in sentence]
 
-    def generate_results(self) -> None:
-        """Generate the final results for person mentions."""
-        mention_counts = self.count_person_mentions()
-        sorted_mentions = sorted(mention_counts.items(), key=lambda x: x[0])  # Sort by name alphabetically
+            for main_name, all_names in name_to_nicknames.items():
+                count_for_main_name = 0
+                for name_variant in all_names:
+                    name_partials = name_variant.split()
 
-        results = {
-            "Question 3": {
-                "Name Mentions": [[name, count] for name, count in sorted_mentions]
+                    # Count full matches of name_variant in the sentence
+                    for i in range(len(sentence_partials) - len(name_partials) + 1):
+                        if sentence_partials[i:i + len(name_partials)] == name_partials:
+                            count_for_main_name += 1
+
+                    # Count partial matches (each word in the name_variant)
+                    for partial in name_partials:
+                        count_for_main_name += sentence_partials.count(partial)
+
+                mention_counts[main_name] += count_for_main_name
+
+        # Filter out names with zero mentions and sort alphabetically
+        filtered_counts = {name: count for name, count in mention_counts.items() if count > 0}
+        return dict(sorted(filtered_counts.items(), key=lambda x: x[0]))
+
+    def generate_results(self) -> Dict[str, Any]:
+        mention_counts = self.count_mentions
+        return {
+            f"Question {self.question_num}": {
+                "Name Mentions": [[name, count] for name, count in mention_counts.items()]
             }
         }
-        print(json.dumps(results, indent=4))
 
 
-# Example usage
 if __name__ == "__main__":
-    data_file = "/path/to/preprocessed_data.json"
-    sentences_file = "examples_new/Q1_examples/example_1/sentences_small_1.csv"
-    people_file = "examples_new/Q1_examples/example_1/people_small_1.csv"
-    stopwords_file = "data/REMOVEWORDS.csv"
-    output_file = "examples_new/Q1_examples/example_1/generated_Q1_result.json"
+    #  If preprocessed:
+    # counter = PersonMentionCounter(
+    #     question_num=3,
+    #     data_file="examples 27.1/Q1_examples/example_1/Q1_result1.json",
+    #     preprocess="--p"
+    # )
 
-    # Check if required files exist
-    for file_path in [sentences_file, people_file, stopwords_file, output_file]:
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Required file not found: {file_path}")
-
+    #  If not preprocessed:
     counter = PersonMentionCounter(
-        data_file=None,
-        sentences_path=sentences_file,
-        people_path=people_file,
-        stopwords_path=stopwords_file,
-        preprocess=True
+        question_num=3,
+        sentences_path="examples 27.1/Q3_examples/example_4/sentences_small_4.csv",
+        people_path="examples 27.1/Q3_examples/example_4/people_small_4.csv",
+        stopwords_path="Data 27.1/REMOVEWORDS.csv",
+        preprocess=None
     )
 
-    # Use the helper function to save the processed data
-    save_to_json(output_path=output_file, process_function=counter.generate_results)
+    # Generate results and print
+    result = counter.generate_results()
+    print(json.dumps(result, indent=4))
+
+    # Save to a JSON file
+    output_file = "examples 27.1/Q3_examples/example_4/Gen_result_Q3_4.json"
+    with open(output_file, "w") as file:
+        json.dump(result, file, indent=4)
     print(f"JSON results saved to {output_file}")

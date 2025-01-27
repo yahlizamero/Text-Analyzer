@@ -96,7 +96,8 @@ class Preprocessing:
 
     # Helper function for preprocessing for other tasks
 
-    def preprocess_other_tasks(sentences_path: str = None, stopwords_path: str = None, people_path: str = None) -> Dict[str, Any]:
+    def preprocess_other_tasks(sentences_path: str = None, stopwords_path: str = None, people_path: str = None) -> Dict[
+        str, Any]:
         """
         Preprocess data from sentences, people, and stopwords files.
         Useful for other tasks that require preprocessing.
@@ -154,10 +155,10 @@ if __name__ == "__main__":
     # print("Processed Names:", processed_data.get("Processed Names", []))
 
     # Example 2 usage
-    sentences_file = "examples 27.1/Q1_examples/example_1/sentences_small_1.csv"
-    people_file = "examples 27.1/Q1_examples/example_1/people_small_1.csv"
+    sentences_file = "examples 27.1/Q1_examples/example_3/sentences_small_3.csv"
+    people_file = "examples 27.1/Q1_examples/example_3/people_small_3.csv"
     stopwords_file = "Data 27.1/REMOVEWORDS.csv"
-    output_file = "examples 27.1/Q1_examples/example_1/Gen_result_Q1_1.json"
+    output_file = "examples 27.1/Q1_examples/example_3/Gen_result_Q1_3.json"
 
     # Check if required files exist
     for file_path in [sentences_file, people_file, stopwords_file]:

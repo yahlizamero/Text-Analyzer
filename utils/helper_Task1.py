@@ -1,7 +1,6 @@
 # Description: Helper functions for the first Task.
 #   In order to maintain a clean software.
 from typing import Set, List, Any
-import json
 
 
 def clean_text(text: str, unwanted_words: Set[str]) -> str:
@@ -34,5 +33,3 @@ def is_duplicate_or_overlap(name: str, other_names: List[str], seen_names: Set[s
 
 def split_name(name: str) -> List[str]:
     return name.split()
-
-
