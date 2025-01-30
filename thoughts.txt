@@ -10,7 +10,7 @@
 		- contexts - works on all examples
 		- direct connections - works on all examples
         - indirect connections - works on all examples
-		- ext: Fixed-Length Paths
+		- ext: Fixed-Length Paths - works on all examples
 		- ext: grouping sentences
 
 helper file
