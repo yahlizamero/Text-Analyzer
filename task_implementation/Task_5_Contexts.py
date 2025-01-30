@@ -1,103 +1,158 @@
-from task_implementation.Task_1_Preprocessing import *
 import json
-import os
-from typing import List, Dict, Any
-from utils.helper_functions import load_file, save_to_json
+from typing import Dict, Any, List
+from collections import defaultdict
+from task_implementation.Task_1_Preprocessing import Preprocessing
+from utils.helper import map_n_grams, preprocess_init
 
-class Contexts:
+
+class PersonContexts:
     def __init__(
             self,
-            sentences_path: str,
-            remove_path: str = None,
-            preprocess: bool = False,
-            preprocessed_data: Dict[str, Any] = None
+            question_num: int,
+            data_file: str = None,
+            sentences_path: str = None,
+            people_path: str = None,
+            stopwords_path: str = None,
+            preprocess: str = None,
+            N: int = None
     ):
         """
-        Initialize the WordPrediction class.
+        Initialize the PersonContexts class.
 
+        :param question_num: The task reference number.
+        :param data_file: Path to the preprocessed JSON file (optional).
         :param sentences_path: Path to the sentences CSV file.
-        :param remove_path: Path to the stopwords CSV file.
-        :param preprocess: Flag to indicate whether preprocessing is required.
-        :param preprocessed_data: Preprocessed data as a dictionary (optional).
+        :param people_path: Path to the people CSV file.
+        :param stopwords_path: Path to the stopwords file.
+        :param preprocess: Flag indicating if preprocessing is required.
+        :param N: Maximum size of the k-seqs to create.
         """
-        if preprocess and not sentences_path:
-            raise ValueError("Sentences path must be provided if preprocessing is enabled.")
+        self.question_num = question_num
+        self.N = N
 
-        self.sentences = (
-            load_preprocessed_sentences(preprocessed_data)
-            if preprocessed_data
-            else self.preprocess_sentences(sentences_path, remove_path)
+        # Check if necessary
+
+        # self.data_file = data_file self.sentences_path = sentences_path self.people_path = people_path
+        # self.stopwords_path = stopwords_path self.preprocess = preprocess self.data = preprocess_init(
+        # self.data_file, self.sentences_path, self.people_path, self.stopwords_path, self.preprocess)
+
+        # If preprocess flag is set, load data directly from the preprocessed file
+        if preprocess == "--p":
+            if not data_file:
+                raise ValueError("A data file must be provided when preprocess=True.")
+            with open(data_file, "r") as file:
+                self.data = json.load(file)
+
+        # Otherwise, preprocess the raw input files
+        elif preprocess is None:
+            if not sentences_path or not stopwords_path or not people_path:
+                raise ValueError("Sentences, people, and stopwords paths must be provided when preprocess=False.")
+            self.data = Preprocessing.preprocess_other_tasks(
+                sentences_path=sentences_path, stopwords_path=stopwords_path, people_path=people_path
+            )
+        else:
+            raise ValueError("Invalid arguments provided for preprocessing.")
+
+    def contexts_and_k_seqs(self) -> list[str, list[str]]:
+        """
+        Find the contexts in which people are mentioned and extract associated k-seqs.
+
+        :return: A dictionary where keys are person names and values are lists of k-seqs.
+        """
+        processed_sentences = (
+            self.data.get("Question 1", {}).get("Processed Sentences", [])
+            if "Question 1" in self.data
+            else self.data.get("Processed Sentences", [])
         )
 
-    def preprocess_sentences(self, sentences_path: str, remove_path: str) -> dict[str, Any]:
-        """Preprocess the sentences from the CSV file."""
-        return preprocess_data(self, sentences_path, remove_path)
+        processed_people = (
+            self.data.get("Question 1", {}).get("Processed Names", [])
+            if "Question 1" in self.data
+            else self.data.get("Processed Names", [])
+        )
 
-    def generate_word_predictions(self) -> Dict[str, Dict[str, int]]:
-        """
-        Generate word predictions based on sentence context.
+        if not processed_sentences or not processed_people:
+            raise ValueError("The provided data does not contain valid 'Processed Sentences' or 'Processed Names'.")
 
-        :return: A dictionary where keys are words and values are dictionaries of possible next words with their counts.
-        """
-        word_predictions = {}
+        # Generate k_seqs
+        n_grams_dict = map_n_grams(processed_sentences, self.N)
 
-        for sentence in self.sentences:
-            for i in range(len(sentence) - 1):
-                current_word = sentence[i]
-                next_word = sentence[i + 1]
+        # Step 1: Construct name-to-main-name mapping with aliases
+        name_to_main_name = {}
+        for person in processed_people:
+            main_name = " ".join(person[0])
+            aliases = {" ".join(alias) for alias in person[1]}
 
-                if current_word not in word_predictions:
-                    word_predictions[current_word] = {}
+            # Add partial name matches (e.g., "Harry Potter" → "Harry", "Potter")
+            partial_names = set()
+            for full_name in [main_name]:
+                words = full_name.split()
+                partial_names.update(words)  # Add individual words as aliases
 
-                if next_word not in word_predictions[current_word]:
-                    word_predictions[current_word][next_word] = 0
+            all_names = (main_name,) + tuple(aliases) + tuple(partial_names)
+            name_to_main_name[main_name] = all_names
 
-                word_predictions[current_word][next_word] += 1
+        # Step 2: Reverse mapping of k_seqs to names
+        name_to_k_seqs = defaultdict(set)
 
-        return word_predictions
+        for sentence_tokens in processed_sentences:
+            sentence = " ".join(sentence_tokens)
+
+            # Get k-seqs (actual n-grams) for this sentence
+            k_seqs = set()
+            for key, val in n_grams_dict.items():
+                if tuple(sentence_tokens) in val:
+                    k_seqs.add(key)  # Store the n-gram (k_seq) instead of full sentences
+
+            # Check if any name (or its alias/partial name) appears in the sentence
+            for main_name, aliases in name_to_main_name.items():
+                for name in aliases:
+                    if name in sentence:
+                        name_to_k_seqs[main_name].update(list(k_seqs))
+
+        # Convert k_seqs to a list of lists for JSON compatibility
+        # Convert results and sort sentences alphabetically
+
+        return [
+            [name, sorted([k_seq.split() for k_seq in sorted(k_seqs)])]  # Ensure k-seqs are lists of words
+            for name, k_seqs in sorted(name_to_k_seqs.items())  # Sort names alphabetically
+        ]
 
     def generate_results(self) -> Dict[str, Any]:
-        """Generate the final results for word predictions."""
-        predictions = self.generate_word_predictions()
+        """
+        Generate the final results for the task.
 
-        # Sort predictions for each word
-        sorted_predictions = {
-            word: {
-                next_word: count
-                for next_word, count in sorted(predictions[word].items(), key=lambda x: (-x[1], x[0]))
-            }
-            for word in predictions
-        }
+        :return: A dictionary containing the task results.
+        """
+        person_contexts_and_kseqs = self.contexts_and_k_seqs()
 
         return {
-            "Question 5": {
-                "Word Predictions": sorted_predictions
+            f"Question {self.question_num}": {
+                "Person Contexts and K-Seqs": person_contexts_and_kseqs
             }
         }
 
-    def print_results(self) -> None:
-        """Print the results in JSON format."""
-        results = self.generate_results()
-        print(json.dumps(results, indent=4))
 
-
-# Example usage
 if __name__ == "__main__":
-    sentences_file = "examples_new/Q5_examples/example_1/sentences_small_1.csv"
-    stopwords_file = "data/REMOVEWORDS.csv"
-    output_file = "examples_new/Q5_examples/example_1/generated_Q5_result.json"
-
-    # Check if required files exist
-    for file_path in [sentences_file, stopwords_file, output_file]:
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Required file not found: {file_path}")
-
-    word_predictor = Contexts(
-        sentences_path=sentences_file,
-        remove_path=stopwords_file,
-        preprocess=True
+    # Example usage
+    person_contexts = PersonContexts(
+        question_num=5,
+         data_file="examples 27.1/Q1_examples/example_1/Q1_result1.json",
+        # sentences_path="examples 27.1/Q5_examples/example_4/sentences_small_4.csv",
+        # people_path="examples 27.1/Q5_examples/example_4/people_small_4.csv",
+        # stopwords_path="Data 27.1/REMOVEWORDS.csv",
+         preprocess="--p",
+        N=3
     )
 
-    # Use the helper function to save the processed data
-    save_to_json(output_path=output_file, process_function=word_predictor.generate_results)
+    # Generate results
+    results = person_contexts.generate_results()
+
+    # Print results
+    print(json.dumps(results, indent=4))
+
+    # Save results to a file
+    output_file = "examples 27.1/Q5_examples/example_4/Gen_result_Q5_4.json"
+    with open(output_file, "w") as file:
+        json.dump(results, file, indent=4)
     print(f"JSON results saved to {output_file}")

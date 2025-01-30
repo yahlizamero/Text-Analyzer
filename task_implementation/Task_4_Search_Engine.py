@@ -1,122 +1,131 @@
+# Description:
+# This file contains the implementation of Task 4: Search Engine.
+# The SearchEngine class is responsible for building a search index
+# mapping each K-seq to the sentences in which it appears.
+# The implementation is using a dictionary as the primary data structure
+# to enable O(1) search complexity for the K-seqs.
+
 import json
-import os
-from typing import List, Dict, Any
-from utils.helper_functions import load_file, save_to_json, print_results
-from task_implementation.Task_1_Preprocessing import preprocess_sentences
+from typing import Dict, Any, List
+from collections import defaultdict
+from task_implementation.Task_1_Preprocessing import Preprocessing
+from utils.helper import map_n_grams
 
 
 class SearchEngine:
     def __init__(
             self,
-            kseq_path: str,
+            question_num: int,
+            data_file: str = None,
             sentences_path: str = None,
-            remove_path: str = None,
-            preprocessed_data: Dict[str, Any] = None,
-            preprocess: bool = False
+            stopwords_path: str = None,
+            preprocess: str = None,
+            k_seq_path: str = None
+
     ):
         """
         Initialize the SearchEngine class.
 
-        :param kseq_path: Path to the JSON file containing K-sequences.
+        :param question_num: The task reference number.
+        :param data_file: Path to the preprocessed JSON file (optional).
         :param sentences_path: Path to the sentences CSV file.
-        :param remove_path: Path to the stopwords CSV file.
-        :param preprocessed_data: Preprocessed data as a dictionary (optional).
-        :param preprocess: Flag to indicate whether preprocessing is required.
+        :param stopwords_path: Path to the stopwords file.
+        :param preprocess: Flag indicating if preprocessing is required.
+        :param k_seq_path: Path to the K-seq JSON file.
+
         """
-        self.kseq_path = kseq_path
+        self.question_num = question_num
+        self.k_seq_path = k_seq_path
 
-        if preprocess and (not sentences_path or not remove_path):
-            raise ValueError("Sentences and stopwords paths must be provided if preprocessing is enabled.")
+        # Load the K-seq list from the JSON file
+        with open(k_seq_path, "r") as file:
+            self.k_seq_list = json.load(file)
 
-        self.sentences = (
-            self.load_preprocessed_sentences(preprocessed_data)
-            if preprocessed_data
-            else self.preprocess_sentences(sentences_path, remove_path)
+        # If there is a preprocess flag, load data directly from the preprocessed file
+        if preprocess == "--p":
+            if not data_file:
+                raise ValueError("A data file must be provided when preprocess=True.")
+            with open(data_file, "r") as file:
+                self.data = json.load(file)
+
+        # If there is no preprocess flag, preprocess the raw input files
+        else:
+            if not sentences_path or not stopwords_path:
+                raise ValueError("Sentences, people, and stopwords paths must be provided when preprocess=False.")
+            self.data = Preprocessing.preprocess_other_tasks(sentences_path, stopwords_path)
+
+    def build_search_index(self) -> Dict[str, List[List[str]]]:
+        """
+        Build a search index mapping each K-seq to the sentences in which it appears.
+        Uses a hash map for O(1) lookup.
+        """
+        processed_sentences = (
+            self.data.get("Question 1", {}).get("Processed Sentences", [])
+            if "Question 1" in self.data
+            else self.data.get("Processed Sentences", [])
         )
-        self.kseqs = self.load_kseqs()
 
+        if not processed_sentences:
+            raise ValueError("The provided data does not contain valid 'Processed Sentences'.")
 
-    def load_preprocessed_sentences(self, preprocessed_data: Dict[str, Any]) -> List[List[str]]:
-        """Load preprocessed sentences from provided data."""
-        return preprocessed_data["Processed Sentences"]
+        # Create a dictionary mapping sentences to their text for O(1) lookup
+        sentence_index = map_n_grams(processed_sentences, N=None)
 
-    def preprocess_sentences(self, sentences_path: str, remove_path: str) -> List[List[str]]:
-        """Preprocess the sentences from the CSV file."""
-        return preprocess_sentences(sentences_path, remove_path)
+        # Match K-seqs in O(1) Lookup
+        search_index = defaultdict(list)
+        for k_seq_key, k_seq_value in self.k_seq_list.items():
+            if isinstance(k_seq_value, list) and isinstance(k_seq_value[0], list):  # Nested lists
+                for inner_seq in k_seq_value:
+                    k_seq_text = " ".join(inner_seq)
+                    if k_seq_text in sentence_index:  # O(1) lookup
+                        search_index[k_seq_text].extend(sentence_index[k_seq_text])
+            else:
+                k_seq_text = " ".join(k_seq_value)
+                if k_seq_text in sentence_index:  # O(1) lookup
+                    search_index[k_seq_text].extend(sentence_index[k_seq_text])
 
-    def load_kseqs(self) -> List[str]:
-        """Load K-sequences from the provided JSON file."""
-        with open(self.kseq_path, "r") as file:
-            return json.load(file)["keys"]
+        # Convert results and sort sentences alphabetically
+        for k_seq_text in search_index:
+            search_index[k_seq_text] = sorted(search_index[k_seq_text], key=lambda x: " ".join(x))
 
-    def preprocess_sentences_to_dict(self) -> Dict[str, List[List[str]]]:
-        """
-        Preprocess the sentences into a dictionary for O(1) K-seq lookups.
-        :return: A dictionary where keys are K-sequences and values are lists of sentences containing them.
-        """
-        kseq_dict = {}
-
-        for sentence in self.sentences:
-            sentence_str = " ".join(sentence)
-            words = sentence
-
-            # Extract all possible K-sequences for this sentence
-            for k in range(1, len(words) + 1):  # For 1-seq to N-seq
-                for i in range(len(words) - k + 1):
-                    kseq = " ".join(words[i:i + k])
-                    if kseq not in kseq_dict:
-                        kseq_dict[kseq] = []
-                    kseq_dict[kseq].append(sentence_str)
-
-        return kseq_dict
-
-    def find_kseq_matches(self) -> Dict[str, List[List[str]]]:
-        """
-        Find sentences matching each K-sequence using a dictionary for O(1) lookups.
-        :return: A dictionary where keys are K-sequences and values are lists of sentences containing those K-sequences.
-        """
-        kseq_matches = {}
-
-        for kseq in self.kseqs:
-            if kseq in self.kseq_dict:
-                kseq_matches[kseq] = sorted(self.kseq_dict[kseq])  # Sort the matching sentences
-
-        return kseq_matches
+        return search_index
 
     def generate_results(self) -> Dict[str, Any]:
-        """Generate the final results for K-sequence matches."""
-        kseq_matches = self.find_kseq_matches()
-        sorted_kseq_matches = sorted(kseq_matches.items(), key=lambda x: x[0])
+        """
+        Generate the final results for the task.
+        :return: A dictionary containing the task results.
+        """
+        search_index = self.build_search_index()
 
-        result = {
-            "Question 4": {
-                "K-Seq Matches": [
-                    [kseq, matches] for kseq, matches in sorted_kseq_matches
-                ]
+        # Convert search index to the required format
+        k_seq_matches = [[k_seq, search_index[k_seq]] for k_seq in sorted(search_index.keys())]
+
+        return {
+            f"Question {self.question_num}": {
+                "K-Seq Matches": k_seq_matches
             }
         }
-        print_results(result)
 
 
-# Example usage
 if __name__ == "__main__":
-    kseq_file = "examples_new/Q4_examples/example_1/kseq_query_keys_1.json"
-    sentences_file = "examples_new/Q4_examples/example_1/sentences_small_1.csv"
-    stopwords_file = "data/REMOVEWORDS.csv"
-    output_file = "examples_new/Q4_examples/example_1/generated_Q4_result.json"
-
-    # Check if required files exist
-    for file_path in [kseq_file, sentences_file, stopwords_file, output_file]:
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Required file not found: {file_path}")
-
+    # Example usage
     search_engine = SearchEngine(
-        kseq_path=kseq_file,
-        sentences_path=sentences_file,
-        remove_path=stopwords_file,
-        preprocess=True
+        question_num=4,
+        k_seq_path="examples 27.1/Q4_examples/example_4/kseq_query_keys_4.json",
+        # data_file="examples 27.1/Q1_examples/example_1/Q1_result1.json",
+        sentences_path="examples 27.1/Q4_examples/example_4/sentences_small_4.csv",
+        stopwords_path="Data 27.1/REMOVEWORDS.csv",
+        # preprocess="--p"
     )
 
-    # Use the helper function to save the processed data
-    save_to_json(output_path=output_file, process_function=search_engine.generate_results)
+    # Generate results
+    results = search_engine.generate_results()
+
+    # Print results
+    print(json.dumps(results, indent=4))
+
+    # Save results to a file
+    output_file = "examples 27.1/Q4_examples/example_4/Gen_result_Q4_4.json"
+    with open(output_file, "w") as file:
+        json.dump(results, file, indent=4)
     print(f"JSON results saved to {output_file}")

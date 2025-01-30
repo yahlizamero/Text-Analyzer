@@ -8,20 +8,6 @@ from typing import Dict, Any
 from task_implementation.Task_1_Preprocessing import Preprocessing
 
 
-def load_data(data_file: str) -> Dict[str, Any]:
-    """
-    Load preprocessed data from a JSON file.
-
-    :param data_file: Path to the preprocessed JSON file.
-    :return: The loaded data as a dictionary.
-    """
-    try:
-        with open(data_file, "r") as file:
-            return json.load(file)
-    except Exception as e:
-        raise FileNotFoundError(f"Error loading data file: {e}")
-
-
 class PersonMentionCounter:
     def __init__(
             self,
@@ -46,8 +32,9 @@ class PersonMentionCounter:
         # If there is a preprocess flag, load data directly from the preprocessed file
         if preprocess == "--p":
             if not data_file:
-                raise ValueError("A data file must be provided when preprocess flag provided.")
-            self.data = load_data(data_file)
+                raise ValueError("A data file must be provided when preprocess=True.")
+            with open(data_file, "r") as file:
+                self.data = json.load(file)
 
         # If there is no preprocess flag, preprocess the raw input files
         else:
@@ -63,7 +50,6 @@ class PersonMentionCounter:
     def count_mentions(self) -> Dict[str, int]:
         """
         Count the mentions of each person in the processed sentences.
-
         :return: A dictionary with person names as keys and their mention counts as values.
         """
         # If the data is preprocessed, load the processed sentences and people
@@ -114,6 +100,10 @@ class PersonMentionCounter:
         return dict(sorted(filtered_counts.items(), key=lambda x: x[0]))
 
     def generate_results(self) -> Dict[str, Any]:
+        """
+        Generate the final results for the task.
+        :return: A dictionary containing the task results.
+        """
         mention_counts = self.count_mentions
         return {
             f"Question {self.question_num}": {

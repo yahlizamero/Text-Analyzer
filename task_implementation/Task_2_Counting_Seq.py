@@ -1,25 +1,13 @@
 # Description:
 # This file contains the implementation of counting sequences of words from a text input.
-# The class CountingSequences uses the input data and saves the results to a JSON file.
+# The SequenceCounter class is responsible for counting the occurrence of sequences
+# of up to length N in the processed sentences.
+
 import json
 import os
 from collections import defaultdict
 from typing import Dict, Any, List
 from task_implementation.Task_1_Preprocessing import Preprocessing
-
-
-def load_data(data_file: str) -> Dict[str, Any]:
-    """
-    Load preprocessed data from a JSON file.
-
-    :param data_file: Path to the preprocessed JSON file.
-    :return: The loaded data as a dictionary.
-    """
-    try:
-        with open(data_file, "r") as file:
-            return json.load(file)
-    except Exception as e:
-        raise FileNotFoundError(f"Error loading data file: {e}")
 
 
 class SequenceCounter:
@@ -49,19 +37,19 @@ class SequenceCounter:
         if preprocess == "--p":
             if not data_file:
                 raise ValueError("A data file must be provided when preprocess=True.")
-            self.data = load_data(data_file)
+            with open(data_file, "r") as file:
+                self.data = json.load(file)
 
         # If there is no preprocess flag, preprocess the raw input files
         else:
             if not sentences_path or not stopwords_path:
-                raise ValueError("Sentences, people, and stopwords paths must be provided when preprocess=False.")
+                raise ValueError("Sentences, and stopwords paths must be provided when preprocess=False.")
             self.data = Preprocessing.preprocess_other_tasks(sentences_path, stopwords_path)
 
     @property
     def count_sequences(self) -> List[List[Any]]:
         """
         Count the occurrence of sequences of up to length of N in the processed sentences.
-
         :return: A list of lists where each inner list contains a sequence type (e.g., "1_seq") and its key-value pairs.
         """
         processed_sentences = (
@@ -90,10 +78,9 @@ class SequenceCounter:
 
         return sorted_counts
 
-    def generate_results(self) -> Dict[str, Any]:
+    def generate_results_task_2(self) -> Dict[str, Any]:
         """
         Generate results for the counted sequences in the desired JSON format.
-
         :return: A dictionary containing the results.
         """
         sequence_counts = self.count_sequences

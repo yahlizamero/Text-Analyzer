@@ -1,8 +1,11 @@
 # Description: Helper functions for the first Task.
 #   In order to maintain a clean software.
-from typing import Set, List, Any
+from typing import Set, List, Dict, Any
+import json
+from collections import defaultdict
 
 
+# Used in Task 1
 def clean_text(text: str, unwanted_words: Set[str]) -> str:
     """
     Clean a string by removing punctuation, unwanted words, and excessive whitespace.

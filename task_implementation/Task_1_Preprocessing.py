@@ -76,7 +76,11 @@ class Preprocessing:
         except Exception as e:
             raise FileNotFoundError(f"Error loading people file: {e}")
 
-    def preprocess(self) -> Dict[str, Any]:
+    def generate_results(self) -> Dict[str, Any]:
+        """
+        Generate the final results for the task.
+        :return: A dictionary containing the task results.
+        """
         return {
             f"Question {self.question_num}": {
                 "Processed Sentences": self.preprocess_sentences(self.stopwords),
@@ -86,18 +90,21 @@ class Preprocessing:
 
     def print_results(self) -> None:
         """Print the results in JSON format."""
-        results = self.preprocess()
+        results = self.generate_results()
         print(json.dumps(results, indent=4))
 
     def save_to_json(self, output_path: str) -> None:  # Extra function not necessary for the task, only pre-checks
-        processed_data = self.preprocess()
+        processed_data = self.generate_results()
         with open(output_path, "w") as file:
             json.dump(processed_data, file, indent=4)
 
     # Helper function for preprocessing for other tasks
 
-    def preprocess_other_tasks(sentences_path: str = None, stopwords_path: str = None, people_path: str = None) -> Dict[
-        str, Any]:
+    def preprocess_other_tasks(
+            sentences_path: str = None,
+            stopwords_path: str = None,
+            people_path: str = None)\
+            -> Dict[str, Any]:
         """
         Preprocess data from sentences, people, and stopwords files.
         Useful for other tasks that require preprocessing.

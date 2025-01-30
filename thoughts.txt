@@ -2,22 +2,25 @@
 
 	- process command (get the command and the arguments and call the right fuction)
 
-	- validation
-
 		and then go to:
 		- preprocessing - works on all examples
 		- counting sequences - works on all examples
 		- counting person mentions - works on all examples
-		- search engine
-		- k-sequences
-		- connections
-		- indirect connections
+		- search engine - works on all examples, check again made changes
+		- contexts - works on all examples
+		- direct connections - works on all examples
+        - indirect connections - works on all examples
+		- ext: Fixed-Length Paths
+		- ext: grouping sentences
 
-utils file
-<!-- usage: from utils import [function name | *] -->
+helper file
+   - process flag - use task 5 as template
+   - get processed_sentences
+   - get processed_people
+tests
+    -   add tests for each task and main
 
-
-ctrl+tab - to move between recently used files
+check edge cases, add comments, go over the codes, make more efficient?
 
 
 Once in the right location:

@@ -4,8 +4,10 @@ import argparse
 from task_implementation.Task_1_Preprocessing import *
 from task_implementation.Task_2_Counting_Seq import *
 from task_implementation.Task_3_Counting_Person import *
-from utils.helper_Task1 import *
-from utils.helper_Task2 import *
+from task_implementation.Task_4_Search_Engine import *
+from task_implementation.Task_5_Contexts import *
+from task_implementation.Task_6_Direct_Connections import *
+from task_implementation.Task_7_Indirect_Connections import *
 
 
 def readargs(args=None):
@@ -60,12 +62,15 @@ def readargs(args=None):
                         )
     return parser.parse_args(args)
 
-def main():
 
-    args=readargs()
-    
+def main():
+    args = readargs()
+
     # Start with implementing according to the task number
     # if statment with the tasks and different classes for each task
+
+    # todo check the files are valid
+
 
     # Task 1 Implementation
     if int(args.task) == 1:
@@ -80,7 +85,7 @@ def main():
             stopwords_path=args.removewords,
         )
 
-        results = preprocessor.preprocess()
+        results = preprocessor.Preprocessing.preprocess()
 
         # Save to output file if specified
         if args.output_file:
@@ -91,6 +96,13 @@ def main():
         # Print to terminal
         print(json.dumps(results, indent=4, sort_keys=True))
 
+    # Task 2 Implementation
 
-if __name__=="__main__":
+    # Task 3 Implementation
+
+
+
+
+if __name__ == "__main__":
+    print("Hello")
     main()
