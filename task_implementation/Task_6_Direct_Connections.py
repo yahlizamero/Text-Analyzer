@@ -1,3 +1,9 @@
+
+# Description: Implementation of Task 6 - Direct Connections.
+# This script finds direct connections between people based on shared contexts.
+# The DirectConnections class preprocesses the input data if necessary and generates the final results for Task 6.
+# It uses a PersonGraph to represent people as nodes and shared contexts as edges.
+
 import json
 import re
 from collections import defaultdict
@@ -17,9 +23,6 @@ class PersonNode:
         """ Connect this node to another person (undirected graph). """
         if other != self:  # Prevent self-loops
             self.neighbors.add(other)
-
-    def __repr__(self):
-        return f"{self.main_name}: {sorted(self.aliases)}"
 
 
 class PersonGraph:
@@ -175,28 +178,3 @@ class DirectConnections:
             }
         }
 
-
-if __name__ == "__main__":
-    # Example usage
-    direct_connections = DirectConnections(
-        question_num=6,
-        sentences_path="examples 27.1/Q6_examples/example_4/sentences_small_4.csv",
-        people_path="examples 27.1/Q6_examples/example_4/people_small_4.csv",
-        stopwords_path="Data 27.1/REMOVEWORDS.csv",
-        # data_file="examples 27.1/Q1_examples/example_1/Q1_result1.json",
-        # preprocess="--p",
-        window_size=5,
-        threshold=1
-    )
-
-    # Generate results
-    results = direct_connections.generate_results()
-
-    # Print results
-    print(json.dumps(results, indent=4))
-
-    # Save results to a file
-    output_file = "examples 27.1/Q6_examples/example_4/Gen_result_Q6_4.json"
-    with open(output_file, "w") as file:
-        json.dump(results, file, indent=4)
-    print(f"JSON results saved to {output_file}")

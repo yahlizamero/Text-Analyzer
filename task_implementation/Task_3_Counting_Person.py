@@ -1,6 +1,7 @@
-# Description:
+# Description: Implementation of Task 3: Counting Person Mentions.
 # This script counts the mentions of each person in a given text.
 # The PersonMentionCounter class preprocesses the input data if necessary and counts the mentions of each person.
+
 
 import json
 from collections import defaultdict
@@ -21,7 +22,7 @@ class PersonMentionCounter:
         """
         Initialize the PersonMentionCounter class.
 
-        :param data_file: Path to the preprocessed JSON file (optional).
+        :param data_file: Path to the preprocessed JSON file (if available).
         :param sentences_path: Path to the sentences CSV file.
         :param people_path: Path to the people CSV file.
         :param stopwords_path: Path to the stopwords CSV file.
@@ -111,30 +112,3 @@ class PersonMentionCounter:
             }
         }
 
-
-if __name__ == "__main__":
-    #  If preprocessed:
-    # counter = PersonMentionCounter(
-    #     question_num=3,
-    #     data_file="examples 27.1/Q1_examples/example_1/Q1_result1.json",
-    #     preprocess="--p"
-    # )
-
-    #  If not preprocessed:
-    counter = PersonMentionCounter(
-        question_num=3,
-        sentences_path="examples 27.1/Q3_examples/example_4/sentences_small_4.csv",
-        people_path="examples 27.1/Q3_examples/example_4/people_small_4.csv",
-        stopwords_path="Data 27.1/REMOVEWORDS.csv",
-        preprocess=None
-    )
-
-    # Generate results and print
-    result = counter.generate_results()
-    print(json.dumps(result, indent=4))
-
-    # Save to a JSON file
-    output_file = "examples 27.1/Q3_examples/example_4/Gen_result_Q3_4.json"
-    with open(output_file, "w") as file:
-        json.dump(result, file, indent=4)
-    print(f"JSON results saved to {output_file}")

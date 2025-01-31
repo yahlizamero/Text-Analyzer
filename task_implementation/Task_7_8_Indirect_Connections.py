@@ -1,14 +1,18 @@
-# Description: Task 7 and 8 implementation.
-#
+
+# Description: Tasks 7 and 8 implementations.
+# The IndirectPaths class is responsible for finding indirect connections between people within a specified distance.
+# The class uses a graph representation of the direct connections between people to find indirect connections.
+# The class can be used to find indirect connections within a specified distance (Task 7) or of a fixed length (Task 8).
+# The class can also preprocess the data if necessary.
 
 
 import collections
 import json
 import time
-from collections import defaultdict, deque
-from typing import Dict, Any, List, Tuple
-from task_implementation.Task_6_Direct_Connections import DirectConnections, PersonGraph, PersonNode
-from utils.helper_graphs import load_graph_from_json, build_graph_from_task6
+from collections import defaultdict
+from typing import Dict, Any, List
+from task_implementation.Task_6_Direct_Connections import DirectConnections
+from utils.helper_graphs import build_graph_from_task6
 
 
 class IndirectPaths:
@@ -61,7 +65,7 @@ class IndirectPaths:
 
         if people_connections_path:
             with open(people_connections_path, "r") as file:
-                self.people_pairs = json.load(file).get("keys", [])  # ✅ Extract only the "keys" list
+                self.people_pairs = json.load(file).get("keys", [])  # Extract only the "keys" list
 
         # Load graph from Task 6 JSON file if provided
         if preprocess == "--p":
@@ -170,13 +174,11 @@ class IndirectPaths:
         }
 
     # Task 8 implementation
-
     def bfs_exact_paths(self, graph: Dict[str, List[str]], start: str, end: str) -> bool:
         """
         Perform BFS to check if there exists a path of exactly length K between start and end.
         :return: True if a path of exactly length K exists, otherwise False.
         """
-        print(f"DEBUG: Checking exact path of length {self.K} from '{start}' to '{end}'")
 
         if start not in graph or end not in graph:
             return False  # If nodes do not exist, return False
@@ -230,30 +232,3 @@ class IndirectPaths:
         }
 
 
-if __name__ == "__main__":
-    # Example usage
-    indirect_connections = IndirectPaths(
-        question_num=7,
-        sentences_path="examples 27.1/Q7_examples/example_3/sentences_small_3.csv",
-        people_path="examples 27.1/Q7_examples/example_3/people_small_3.csv",
-        stopwords_path="Data 27.1/REMOVEWORDS.csv",
-        people_connections_path="examples 27.1/Q7_examples/example_3/people_connections_3.json",
-        # data_file="examples 27.1/Q6_examples/example_1/Gen_result_Q6_1.json",
-        # preprocess="--p",
-        window_size=5,
-        threshold=1,
-        # K=2,
-        maximal_distance=1000,
-    )
-
-    # Generate results
-    results = indirect_connections.generate_results_task_7()
-    # results = indirect_connections.generate_results_task_8()
-    # Print results
-    print(json.dumps(results, indent=4))
-
-    # Save results to a file
-    output_file = "examples 27.1/Q7_examples/example_3/Gen_result_Q7_3.json"
-    with open(output_file, "w") as file:
-        json.dump(results, file, indent=4)
-    print(f"JSON results saved to {output_file}")

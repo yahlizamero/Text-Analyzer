@@ -1,3 +1,7 @@
+# Description: Implementation of Task 5 - Person Contexts and K-Sequences.
+# This script finds the contexts in which people are mentioned and extracts associated k-sequences.
+# The PersonContexts class preprocesses the input preprocess if necessary and generates the final results for Task 5.
+
 import json
 from typing import Dict, Any, List
 from collections import defaultdict
@@ -9,7 +13,6 @@ class PersonContexts:
     def __init__(
             self,
             question_num: int,
-            data_file: str = None,
             sentences_path: str = None,
             people_path: str = None,
             stopwords_path: str = None,
@@ -20,34 +23,29 @@ class PersonContexts:
         Initialize the PersonContexts class.
 
         :param question_num: The task reference number.
-        :param data_file: Path to the preprocessed JSON file (optional).
         :param sentences_path: Path to the sentences CSV file.
         :param people_path: Path to the people CSV file.
         :param stopwords_path: Path to the stopwords file.
-        :param preprocess: Flag indicating if preprocessing is required.
+        :param preprocess: Path to the preprocessed JSON file (optional).
         :param N: Maximum size of the k-seqs to create.
         """
         self.question_num = question_num
+        self.sentences_path = sentences_path
+        self.people_path = people_path
+        self.stopwords_path = stopwords_path
+        self.preprocess = preprocess
         self.N = N
 
-        # Check if necessary
-
-        # self.data_file = data_file self.sentences_path = sentences_path self.people_path = people_path
-        # self.stopwords_path = stopwords_path self.preprocess = preprocess self.data = preprocess_init(
-        # self.data_file, self.sentences_path, self.people_path, self.stopwords_path, self.preprocess)
-
-        # If preprocess flag is set, load data directly from the preprocessed file
-        if preprocess == "--p":
-            if not data_file:
-                raise ValueError("A data file must be provided when preprocess=True.")
-            with open(data_file, "r") as file:
-                self.data = json.load(file)
+        # If preprocess flag is set, load preprocess directly from the preprocessed file
+        if preprocess:
+            with open(preprocess, "r") as file:
+                self.preprocess = json.load(file)
 
         # Otherwise, preprocess the raw input files
         elif preprocess is None:
             if not sentences_path or not stopwords_path or not people_path:
                 raise ValueError("Sentences, people, and stopwords paths must be provided when preprocess=False.")
-            self.data = Preprocessing.preprocess_other_tasks(
+            self.preprocess = Preprocessing.preprocess_other_tasks(
                 sentences_path=sentences_path, stopwords_path=stopwords_path, people_path=people_path
             )
         else:
@@ -60,19 +58,20 @@ class PersonContexts:
         :return: A dictionary where keys are person names and values are lists of k-seqs.
         """
         processed_sentences = (
-            self.data.get("Question 1", {}).get("Processed Sentences", [])
-            if "Question 1" in self.data
-            else self.data.get("Processed Sentences", [])
+            self.preprocess.get("Question 1", {}).get("Processed Sentences", [])
+            if "Question 1" in self.preprocess
+            else self.preprocess.get("Processed Sentences", [])
         )
 
         processed_people = (
-            self.data.get("Question 1", {}).get("Processed Names", [])
-            if "Question 1" in self.data
-            else self.data.get("Processed Names", [])
+            self.preprocess.get("Question 1", {}).get("Processed Names", [])
+            if "Question 1" in self.preprocess
+            else self.preprocess.get("Processed Names", [])
         )
 
         if not processed_sentences or not processed_people:
-            raise ValueError("The provided data does not contain valid 'Processed Sentences' or 'Processed Names'.")
+            raise ValueError("The provided preprocess does not contain valid 'Processed Sentences' or 'Processed "
+                             "Names'.")
 
         # Generate k_seqs
         n_grams_dict = map_n_grams(processed_sentences, self.N)
@@ -132,27 +131,3 @@ class PersonContexts:
             }
         }
 
-
-if __name__ == "__main__":
-    # Example usage
-    person_contexts = PersonContexts(
-        question_num=5,
-         data_file="examples 27.1/Q1_examples/example_1/Q1_result1.json",
-        # sentences_path="examples 27.1/Q5_examples/example_4/sentences_small_4.csv",
-        # people_path="examples 27.1/Q5_examples/example_4/people_small_4.csv",
-        # stopwords_path="Data 27.1/REMOVEWORDS.csv",
-         preprocess="--p",
-        N=3
-    )
-
-    # Generate results
-    results = person_contexts.generate_results()
-
-    # Print results
-    print(json.dumps(results, indent=4))
-
-    # Save results to a file
-    output_file = "examples 27.1/Q5_examples/example_4/Gen_result_Q5_4.json"
-    with open(output_file, "w") as file:
-        json.dump(results, file, indent=4)
-    print(f"JSON results saved to {output_file}")

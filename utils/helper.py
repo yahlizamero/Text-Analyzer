@@ -7,7 +7,7 @@ import json
 from task_implementation.Task_1_Preprocessing import Preprocessing
 
 
-# Used in Task 4 and 5
+# Used in Task 4, 5 and 9
 def map_n_grams(sentences: List[List[str]], N: int) -> Dict[str, List[str]]:
     """
     Map n-grams (word sequences) to the sentences they appear in.

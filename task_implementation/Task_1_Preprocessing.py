@@ -1,4 +1,5 @@
-# Description:
+
+# Description: This script preprocesses the input data for Task 1: Preprocessing.
 # This file contains the implementation of the preprocessing task for the text analyzer project.
 # Includes functionality for cleaning sentences and processing names.
 
@@ -144,39 +145,3 @@ class Preprocessing:
         return results
 
 
-# Example usage
-if __name__ == "__main__":
-    # sentences_path = "examples_new/Q1_examples/example_1/sentences_small_1.csv"
-    # people_path = "examples_new/Q1_examples/example_1/people_small_1.csv"
-    # stopwords_path = "Data/REMOVEWORDS.csv"
-    #
-    # # Preprocess data
-    # processed_data = Preprocessing.preprocess_other_tasks(
-    #     sentences_path=sentences_path,
-    #     people_path=people_path,
-    #     stopwords_path=stopwords_path
-    # )
-    #
-    # # Access processed sentences and names
-    # print("Processed Sentences:", processed_data.get("Processed Sentences", []))
-    # print("Processed Names:", processed_data.get("Processed Names", []))
-
-    # Example 2 usage
-    sentences_file = "examples 27.1/Q1_examples/example_3/sentences_small_3.csv"
-    people_file = "examples 27.1/Q1_examples/example_3/people_small_3.csv"
-    stopwords_file = "Data 27.1/REMOVEWORDS.csv"
-    output_file = "examples 27.1/Q1_examples/example_3/Gen_result_Q1_3.json"
-
-    # Check if required files exist
-    for file_path in [sentences_file, people_file, stopwords_file]:
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Required file not found: {file_path}")
-
-    preprocessor = Preprocessing(
-        question_num=1,
-        sentences_path=sentences_file,
-        people_path=people_file,
-        stopwords_path=stopwords_file
-    )
-    preprocessor.save_to_json(output_file)
-    print(f"JSON results saved to {output_file}")

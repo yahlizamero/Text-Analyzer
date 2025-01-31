@@ -1,6 +1,6 @@
 - main
 
-	- process command (get the command and the arguments and call the right fuction)
+	- process command (get the command and the arguments and call the right function)
 
 		and then go to:
 		- preprocessing - works on all examples
@@ -11,7 +11,7 @@
 		- direct connections - works on all examples
         - indirect connections - works on all examples
 		- ext: Fixed-Length Paths - works on all examples
-		- ext: grouping sentences
+		- ext: grouping sentences - works on all examples need to check preprocess
 
 helper file
    - process flag - use task 5 as template

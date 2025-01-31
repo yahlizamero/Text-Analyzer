@@ -1,4 +1,4 @@
-# Description:
+# Description: Implementation of Task 4: Search Engine.
 # This file contains the implementation of Task 4: Search Engine.
 # The SearchEngine class is responsible for building a search index
 # mapping each K-seq to the sentences in which it appears.
@@ -31,7 +31,7 @@ class SearchEngine:
         :param sentences_path: Path to the sentences CSV file.
         :param stopwords_path: Path to the stopwords file.
         :param preprocess: Flag indicating if preprocessing is required.
-        :param k_seq_path: Path to the K-seq JSON file.
+        :param k_seq_path: Path to the K-seq JSON file. (if available)
 
         """
         self.question_num = question_num
@@ -57,7 +57,7 @@ class SearchEngine:
     def build_search_index(self) -> Dict[str, List[List[str]]]:
         """
         Build a search index mapping each K-seq to the sentences in which it appears.
-        Uses a hash map for O(1) lookup.
+        Uses a dictionary for O(1) lookup.
         """
         processed_sentences = (
             self.data.get("Question 1", {}).get("Processed Sentences", [])
@@ -106,26 +106,3 @@ class SearchEngine:
             }
         }
 
-
-if __name__ == "__main__":
-    # Example usage
-    search_engine = SearchEngine(
-        question_num=4,
-        k_seq_path="examples 27.1/Q4_examples/example_4/kseq_query_keys_4.json",
-        # data_file="examples 27.1/Q1_examples/example_1/Q1_result1.json",
-        sentences_path="examples 27.1/Q4_examples/example_4/sentences_small_4.csv",
-        stopwords_path="Data 27.1/REMOVEWORDS.csv",
-        # preprocess="--p"
-    )
-
-    # Generate results
-    results = search_engine.generate_results()
-
-    # Print results
-    print(json.dumps(results, indent=4))
-
-    # Save results to a file
-    output_file = "examples 27.1/Q4_examples/example_4/Gen_result_Q4_4.json"
-    with open(output_file, "w") as file:
-        json.dump(results, file, indent=4)
-    print(f"JSON results saved to {output_file}")
