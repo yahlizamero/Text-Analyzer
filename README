@@ -4,6 +4,9 @@
 ####################################################################################################################
 ## Extensions:
 
+Task 8 - Fixed Length Indirect Connections
+Task 9 - Grouping Sentences
+
 Task 8 - Fixed Length Indirect Connections: This extension builds upon Task 7 by finding indirect connections of an
 exact length (K) between people meaning there is a path of nodes where each node is a person that is of size k. I added
 a new function to the class that is explicit to task 8 that uses BFS to traverse the graph that was created using task 6.
@@ -13,22 +16,20 @@ exactly K edges; paths shorter or longer than K are discarded. I used BFS for th
 all possible paths level by level, making it ideal for finding indirect connections of an exact length K while ensuring
 the shortest and most comprehensive traversal of the graph.
 
-
 Task 9 - Grouping Sentences: I chose to extend the project with Task 9 because grouping sentences based on shared content
 complements the network analysis from Tasks 6, 7, and 8. This extension clusters sentences based on shared words,
 revealing similar themes in groups of sentences within the text. In order to implement this task, I created a new class
 that either receives the output of Task 1 (processed) or receives raw files. The class then creates an adjacency list of
-the graph of sentences based on the processed sentence data. Ecach edge between sentences is if they have the identical
+the graph of sentences based on the processed sentence data. Each edge between sentences is if they have the identical
 words that is above a certain threshold (parameter). Then uses BFS to traverse the graph where each node is a sentences
-and groups sentences based on each sentence's neighbor i.e shared words in the sentences. The output is a JSON file that
+and groups sentences based on each sentence's neighbor i.e. shared words in the sentences. The output is a JSON file that
 contains the grouped sentences.
 
 ####################################################################################################################
 
 ## Design:
 
-I divided each task in the project into a separate class to encapsulate the logic and data specific to that task. This
-approach ensures that each class is focused on a single task, making the code more modular and easier to maintain. Each
+I divided each task in the project into a separate class to encapsulate the logic and data specific to that task. Each
 class contains methods for reading input data, processing it, and generating the output in the required format. This
 design allows for easy review of the project with it being more cleaner and modular, as well as the fact that each new
 task can be implemented in a separate class without affecting the existing codebase.
@@ -40,13 +41,14 @@ into a single class, I reduced code duplication and streamlined maintenance, all
 both cases efficiently.
 
 In addition, I added a Utils file that includes:
+
 - helper file: Includes the preprocess_init function that is used in most of the tasks because it allows to deal
 with both cases of receiving either a preprocessed file or the raw data files. It also includes the function that maps
 n grams which was used both in task 4 and task 5
 
 - tests file: Includes the tests for all of the tasks and the helper task functions in the main file. The tests are
-written using the unittest library and pytest for coverage. The tests cover the main functionality of each task, edge
-cases, and the helper functions. In the test files since the requirements were not to provide actual files, I used the
-the mock library to mock the file's behavior and the data that is being read from them according to the task.
+written using the unittest library and pytest for coverage. In the test files since the requirements were not to provide
+actual files, I used the mock library to mock the file's behavior and the data that is being read from them according to
+ the task.
 
 

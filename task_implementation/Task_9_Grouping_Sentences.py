@@ -54,7 +54,8 @@ class SentenceGraph:
                     if node not in visited:
                         visited.add(node)  # Mark it as visited
                         group.append(" ".join(self.sentences[node]))  # Convert back to full sentence
-                        queue.extend(self.graph[node])  # Add all connected sentences to the queue to be processed
+                        # Add all connected sentences to the queue to be processed, because of adjacency list
+                        queue.extend(self.graph[node])
                 groups.append(sorted(group))  # Once a group is complete, sort its sentences alphabetically
 
         return sorted(groups, key=lambda g: (len(g), g))  # Sort groups by size, then alphabetically

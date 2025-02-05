@@ -26,8 +26,8 @@ pytest --cov=task_implementation utils/tests/
 
 # delete resulttest.json before running the tests
 
-python3 main.py -t 8 -s "examples 27.1/Q8_examples/example_3/sentences_small_3.csv" -n "examples 27.1/Q8_examples/example_3/people_small_3.csv" -r "Data/REMOVEWORDS.csv" --windowsize 3 --threshold 2 --pairs "examples 27.1/Q8_examples/example_3/people_connections_3.json" --fixed_length 8  -o "resulttest.json"
+python3 main.py -t 8 -s "examples 27.1/Q8_examples/example_3/sentences_small_3.csv" -n "examples 27.1/Q8_examples/example_3/people_small_3.csv" -r "Data/REMOVEWORDS.csv" --windowsize 3 --threshold 2 --pairs "examples 27.1/Q8_examples/example_3/people_connections_3.json" --fixed_length 8
 python3 main.py -t 9 -p "examples 27.1/Q1_examples/example_1/Q1_result1.json" --threshold 5 -o "resulttest.json"
-python3 main.py -t 4 -s "examples 27.1/Q4_examples/example_1/sentences_small_1.csv" -r "Data/REMOVEWORDS.csv" --qsek_query_path "examples 27.1/Q4_examples/example_1/kseq_query_keys_1.json" -o "resulttest.json"
+python3 main.py -t 4 -s "examples 27.1/Q4_examples/example_1/sentences_small_1.csv" -r "Data/REMOVEWORDS.csv" --qsek_query_path "examples 27.1/Q4_examples/example_1/kseq_query_keys_1.json"
 python3 main.py -t 7 -p "examples 27.1/Q6_examples/example_1/Q6_result1_w4_t4.json" --pairs "examples 27.1/Q7_examples/example_1/people_connections_1.json" --maximal_distance 1000  -o "resulttest.json"
 python3 main.py -t 9  -s "examples 27.1/Q9_examples/example_2/sentences_small_2.csv" -r "Data/REMOVEWORDS.csv" --threshold 6 -o "resulttest.json"

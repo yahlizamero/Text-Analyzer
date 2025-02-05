@@ -3,11 +3,10 @@
 # The DirectConnections class preprocesses the input data if necessary and generates the final results for Task 6.
 # It uses a PersonGraph to represent people as nodes and shared contexts as edges.
 
-import json
 import re
 import sys
 from collections import defaultdict
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
 from utils.helper import preprocess_init
 
 

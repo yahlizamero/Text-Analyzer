@@ -61,9 +61,6 @@ def readargs(args=None):
     parser.add_argument('--qsek_query_path',
                         help="json file with query path",
                         )
-    parser.add_argument('-o', '--output',
-                        help="Output file path",
-                        )
     return parser.parse_args(args)
 
 
@@ -163,12 +160,6 @@ def main():
         print("Invalid task number. Please specify a task between 1 and 9.")
         return
 
-    # Save results - tests
-    with open(args.output, 'w') as f:
-        json.dump(result, f, indent=4)
-    print(f"Results saved in {args.output}")
-
-    # this is after I passed all the tests and deleted the output files
     print(json.dumps(result, indent=4))
 
 

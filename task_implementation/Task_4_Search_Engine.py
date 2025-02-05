@@ -63,6 +63,7 @@ class SearchEngine:
         """
 
         # Create a dictionary mapping sentences to their text for O(1) lookup
+        # The keys are n-grams and the values are the sentences they appear in.
         sentence_index = map_n_grams(self.data.get("Processed Sentences", []), N=None)
 
         # Match K-seqs in O(1) Lookup
@@ -75,8 +76,9 @@ class SearchEngine:
             for k_seq_value in self.k_seq_list.get("keys", []):
                 if isinstance(k_seq_value, list) and k_seq_value:  # Ensure non-empty list
                     k_seq_text = " ".join(k_seq_value)  # Convert to text
-                    if k_seq_text in sentence_index and k_seq_text not in added_kseqs:  # O(1) lookup and duplicate
-                        # check
+                    if k_seq_text in sentence_index and k_seq_text not in added_kseqs: # O(1) lookup and duplicate check
+
+                        # adding the sentences from sentence_index to search_index for the given k_seq_text
                         search_index[k_seq_text].extend([list(seq) for seq in sentence_index[k_seq_text]])
                         added_kseqs.add(k_seq_text)
             # Convert results and sort sentences alphabetically
@@ -104,4 +106,3 @@ class SearchEngine:
                 "K-Seq Matches": k_seq_matches
             }
         }
-
