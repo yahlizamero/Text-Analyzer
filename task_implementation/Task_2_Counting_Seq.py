@@ -3,70 +3,57 @@
 # The SequenceCounter class is responsible for counting the occurrence of sequences
 # of up to length N in the processed sentences.
 
-import json
-import os
 from collections import defaultdict
-from typing import Dict, Any, List
-from task_implementation.Task_1_Preprocessing import Preprocessing
+import sys
+from typing import Dict, Any
+from utils.helper import preprocess_init
 
 
 class SequenceCounter:
     def __init__(
             self,
             question_num: int = 2,
-            data_file: str = None,
             sentences_path: str = None,
             stopwords_path: str = None,
-            preprocess: str = None,
+            preprocess_path: str = None,
             N: int = None
     ):
         """
         Initialize the PersonMentionCounter class.
 
-        :param data_file: Path to the preprocessed JSON file (optional).
         :param sentences_path: Path to the sentences CSV file.
         :param stopwords_path: The path for a file with a list of common words to remove CSV file.
-        :param preprocess: Path to JSON with preprocessed data
+        :param preprocess_path: Path to the preprocessed JSON file (optional).
         :param N: Maximum size of the sequences to create.
         """
+        # Initialize the class attributes
         self.question_num = question_num
-        self.N = N if N is not None else 3
-        self.preprocess = preprocess
+        self.N = N
+        if N is None or N < 1:
+            print("Error: N value must be provided and greater than 0.")
+            sys.exit(1)
 
-        # If there is a preprocess flag, load data directly from the preprocessed file
-        if self.preprocess:
-            with open(self.preprocess, "r") as file:
-                self.preprocess = json.load(file)
+        self.preprocess_path = preprocess_path
 
-        # If there is no preprocess flag, preprocess the raw input files
-        else:
-            if not sentences_path or not stopwords_path:
-                raise ValueError("Sentences, and stopwords paths must be provided when preprocess=False.")
-            self.data = Preprocessing.preprocess_other_tasks(sentences_path, stopwords_path)
+        # Load the preprocessed data weather from a preprocessed file or preprocess it from raw data
+        self.data = preprocess_init(preprocess_path, sentences_path, None, stopwords_path)
 
     @property
-    def count_sequences(self) -> List[List[Any]]:
+    def count_sequences(self) -> list[list[str | list[list[str | int]]]]:
         """
         Count the occurrence of sequences of up to length of N in the processed sentences.
         :return: A list of lists where each inner list contains a sequence type (e.g., "1_seq") and its key-value pairs.
         """
-        processed_sentences = (
-            self.data.get("Question 1", {}).get("Processed Sentences", [])
-            if "Question 1" in self.data
-            else self.data.get("Processed Sentences", [])
-        )
 
-        if not processed_sentences:
-            raise ValueError(
-                "The provided data does not contain valid 'Processed Sentences'. Please check the input data.")
-
+        # Initialize a dictionary to store the counts of sequences of different lengths
         sequence_counts = {f"{i}_seq": defaultdict(int) for i in range(1, self.N + 1)}
 
-        for sentence in processed_sentences:
+        # Count the sequences of different lengths in the processed sentences
+        for sentence in self.data.get("Processed Sentences", []):
             for seq_size in range(1, self.N + 1):
-                for i in range(len(sentence) - seq_size + 1):
-                    seq = tuple(sentence[i:i + seq_size])
-                    sequence_counts[f"{seq_size}_seq"][seq] += 1
+                for i in range(len(sentence) - seq_size + 1):  # Loop over the sentence
+                    seq = tuple(sentence[i:i + seq_size])  # Create a sequence of length seq_size
+                    sequence_counts[f"{seq_size}_seq"][seq] += 1  # Increment the count of the sequence
 
         # Convert default dict to a sorted list of lists
         sorted_counts = [

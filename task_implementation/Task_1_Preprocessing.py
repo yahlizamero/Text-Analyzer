@@ -1,40 +1,106 @@
-
 # Description: This script preprocesses the input data for Task 1: Preprocessing.
-# This file contains the implementation of the preprocessing task for the text analyzer project.
 # Includes functionality for cleaning sentences and processing names.
 
-import json
+
 import csv
 import os
+import sys
+import re
 from typing import *
-from utils.helper_Task1 import clean_text, is_duplicate_or_overlap, split_name
 
 
-def load_stopwords_file(stopwords_path: str) -> Set[str]:
+# Helper functions for preprocessing
+def clean_text(text: str, unwanted_words: Set[str]) -> str:
     """
-    Load stopwords file from a file into a set.
-    Args:
-        stopwords_path (str): Path to the stopwords file.
-    Returns:
-        Set[str]: A set of stopwords.
+    Clean a string by removing punctuation, unwanted words, and excessive whitespace.
+    :param: text (str): The text to clean.
+    :param: unwanted_words (Set[str]): A set of words to remove from the text.
+    :return: str: The cleaned text.
     """
-    try:
-        with open(stopwords_path, 'r') as file:
-            return set(line.strip().lower() for line in file)
-    except Exception as e:
-        raise FileNotFoundError(f"Error loading data file: {e}")
+    text = re.sub(r'[^a-z0-9\s]', ' ', text.lower())  # Remove punctuation and convert to lowercase
+    text = re.sub(r'\s+', ' ', text).strip()  # Remove extra whitespaces
+    return ' '.join(word for word in text.split() if word not in unwanted_words)
+
+
+def check_file_validity(file_type: str, path: str):
+    if not os.path.exists(path):
+        print(f"FileNotFoundError: The file for {file_type.replace('_', ' ')} was not found at: {path}")
+        sys.exit(1)
+    if os.path.getsize(path) == 0:
+        print(f"Error: The file for {file_type.replace('_', ' ')} at {path} is empty.")
+        sys.exit(1)
+
+    # Check for correct headers in sentences and people files
+    if file_type == "sentences_path":
+        with open(path, 'r') as file:
+            header = file.readline().strip()
+            if header != "sentence":
+                print(
+                    f"Error: The sentences file at {path} is not in the correct format. Expected header 'sentence'.")
+                sys.exit(1)
+    elif file_type == "people_path":
+        with open(path, 'r') as file:
+            header = file.readline().strip()
+            if header != "Name,Other Names":
+                print(
+                    f"Error: The people file at {path} is not in the correct format. Expected header 'Name,Other Names'.")
+                sys.exit(1)
 
 
 class Preprocessing:
-    def __init__(self, question_num: int, sentences_path: str, people_path: str, stopwords_path: str) -> None:
+    def __init__(self,
+                 question_num: int = None,
+                 sentences_path: str = None,
+                 people_path: str = None,
+                 stopwords_path: str = None) -> None:
+
+        # Initialize the Preprocessing class with the required data paths
         self.question_num = question_num
         self.sentences_path = sentences_path
         self.people_path = people_path
-        self.stopwords = load_stopwords_file(stopwords_path)
+        self.stopwords = self.load_stopwords_file(stopwords_path)
 
-    def preprocess_sentences(self, stopwords_path) -> List[List[str]]:
+        if not stopwords_path:  # Stopwords are required for preprocessing
+            print("Error: Stopwords file path must be provided when preprocessing raw data.")
+            sys.exit(1)
+
+        preprocessing_args = {
+            "sentences_path": sentences_path,
+            "people_path": people_path,
+            "stopwords_path": stopwords_path
+        }
+
+        # Check if files exist, are not empty, and have the correct format
+        for key, path in preprocessing_args.items():
+            if path:
+                check_file_validity(key, path)
+
+    @staticmethod
+    def load_stopwords_file(stopwords_path: str) -> Set[str]:
+        """
+        Load stopwords file from a file into a set.
+        Args:
+            stopwords_path (str): Path to the stopwords file.
+        Returns:
+            Set[str]: A set of stopwords.
+        """
+        try:
+            with open(stopwords_path, 'r') as file:
+                return set(line.strip().lower() for line in file)
+        except Exception as e:
+            print(f"Error loading stopwords file: {e}")
+            sys.exit(1)
+
+    def preprocess_sentences(self) -> List[List[str]]:
+        """
+        Preprocess the sentences from the sentences CSV file.
+        :param: sentences_path (str): Path to the sentences CSV file.
+        :param: stopwords (Set[str]): A set of stopwords to remove from the sentences.
+        :return: A list of processed sentences.
+        """
         processed_sentences = []
         try:
+            # Load the sentences CSV file and clean the sentences
             with open(self.sentences_path, "r") as file:
                 reader = csv.DictReader(file)
                 for row in reader:
@@ -43,13 +109,21 @@ class Preprocessing:
                         processed_sentences.append(sentence.split())
             return processed_sentences
         except Exception as e:
-            raise FileNotFoundError(f"Error loading sentence file: {e}")
+            print(f"Error loading sentences file: {e}")
+            sys.exit(1)
 
-    def preprocess_people(self) -> List[List[List[Any]]]:
+    def preprocess_people(self) -> List[List[List[str]]]:
+        """
+        Preprocess the people from the people CSV file.
+        :param: people_path (str): Path to the people CSV file.
+        :param: stopwords (Set[str]): A set of stopwords to remove from the people names.
+        :return: A list of processed people.
+        """
         processed_people = []
         seen_names = set()
 
         try:
+            # Load the people CSV file and clean the names
             with open(self.people_path, "r") as file:
                 reader = csv.DictReader(file)
                 for row in reader:
@@ -57,15 +131,17 @@ class Preprocessing:
                     if not main_name:  # Skip empty names
                         continue
 
+                    # Split and clean other names
                     raw_other_names = row['Other Names'].strip().split(',') if row['Other Names'].strip() else []
                     raw_other_names = [name.strip() for name in raw_other_names]
                     other_names = [clean_text(name, self.stopwords) for name in raw_other_names]
                     other_names = [name for name in other_names if name]
 
-                    main_name_split = split_name(main_name)
-                    other_names_split = [split_name(name) if " " in name else [name] for name in other_names]
+                    main_name_split = main_name.split()
+                    other_names_split = [name.split() if " " in name else [name] for name in other_names]
 
-                    if is_duplicate_or_overlap(main_name, other_names, seen_names):
+                    # Skip duplicates or overlaps
+                    if main_name in seen_names or any(nickname in seen_names for nickname in other_names):
                         continue
 
                     seen_names.add(main_name)
@@ -75,73 +151,20 @@ class Preprocessing:
                     processed_people.append([main_name_split, other_names_split if other_names_split else []])
             return processed_people
         except Exception as e:
-            raise FileNotFoundError(f"Error loading people file: {e}")
+            print(f"Error loading people file: {e}")
+            sys.exit(1)
 
     def generate_results(self) -> Dict[str, Any]:
         """
         Generate the final results for the task.
+        :param: preprocess_sentences: List of preprocessed sentences.
+        :param: preprocess_people: List of preprocessed people.
+        :param: stopwords: Set of stopwords.
         :return: A dictionary containing the task results.
         """
         return {
             f"Question {self.question_num}": {
-                "Processed Sentences": self.preprocess_sentences(self.stopwords),
+                "Processed Sentences": self.preprocess_sentences(),
                 "Processed Names": self.preprocess_people()
             }
         }
-
-    def print_results(self) -> None:
-        """Print the results in JSON format."""
-        results = self.generate_results()
-        print(json.dumps(results, indent=4))
-
-    def save_to_json(self, output_path: str) -> None:  # Extra function not necessary for the task, only pre-checks
-        processed_data = self.generate_results()
-        with open(output_path, "w") as file:
-            json.dump(processed_data, file, indent=4)
-
-    # Helper function for preprocessing for other tasks
-
-    def preprocess_other_tasks(
-            sentences_path: str = None,
-            stopwords_path: str = None,
-            people_path: str = None)\
-            -> Dict[str, Any]:
-        """
-        Preprocess data from sentences, people, and stopwords files.
-        Useful for other tasks that require preprocessing.
-
-        :param sentences_path: Path to the sentences CSV file.
-        :param people_path: Path to the people CSV file.
-        :param stopwords_path: Path to the stopwords CSV file.
-        :return: A dictionary containing processed sentences and/or processed names.
-        """
-        if not stopwords_path or not os.path.exists(stopwords_path):
-            raise FileNotFoundError(f"Stopwords file not found: {stopwords_path}")
-
-        results = {}
-
-        if sentences_path:
-            if not os.path.exists(sentences_path):
-                raise FileNotFoundError(f"Sentences file not found: {sentences_path}")
-            preprocessor_instance = Preprocessing(
-                question_num=0,
-                sentences_path=sentences_path,
-                people_path=people_path,
-                stopwords_path=stopwords_path
-            )
-            results["Processed Sentences"] = preprocessor_instance.preprocess_sentences(stopwords_path)
-
-        if people_path:
-            if not os.path.exists(people_path):
-                raise FileNotFoundError(f"People file not found: {people_path}")
-            preprocessor_instance = Preprocessing(
-                question_num=0,
-                sentences_path=sentences_path,
-                people_path=people_path,
-                stopwords_path=stopwords_path
-            )
-            results["Processed Names"] = preprocessor_instance.preprocess_people()
-
-        return results
-
-

@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 from task_implementation.Task_1_Preprocessing import Preprocessing
 from task_implementation.Task_2_Counting_Seq import SequenceCounter
 from task_implementation.Task_3_Counting_Person import PersonMentionCounter
@@ -69,66 +70,82 @@ def readargs(args=None):
 def main():
     args = readargs()
 
+    # General check for preprocessed data
+    if args.preprocessed and not args.preprocessed.endswith('.json'):
+        print("Error: The preprocessed file should be a JSON file.")
+        sys.exit(1)
+
     if args.task == 1:
-        processor = Preprocessing(question_num=1,
+        processor = Preprocessing(question_num=args.task,
                                   sentences_path=args.sentences,
                                   people_path=args.names,
                                   stopwords_path=args.removewords)
         result = processor.generate_results()
 
     elif args.task == 2:
-        counter = SequenceCounter(question_num=1,
+        counter = SequenceCounter(question_num=args.task,
                                   sentences_path=args.sentences,
                                   stopwords_path=args.removewords,
-                                  preprocess=args.preprocessed,
+                                  preprocess_path=args.preprocessed,
                                   N=args.maxk)
         result = counter.generate_results()
 
     elif args.task == 3:
-        person_counter = PersonMentionCounter(question_num=3,
+        person_counter = PersonMentionCounter(question_num=args.task,
                                               sentences_path=args.sentences,
                                               stopwords_path=args.removewords,
                                               people_path=args.names,
-                                              preprocess=args.preprocessed)
+                                              preprocess_path=args.preprocessed)
         result = person_counter.generate_results()
 
     elif args.task == 4:
-        search_engine = SearchEngine(question_num=4,
+        search_engine = SearchEngine(question_num=args.task,
                                      sentences_path=args.sentences,
                                      stopwords_path=args.removewords,
                                      k_seq_path=args.qsek_query_path,
-                                     preprocess=args.preprocessed)
+                                     preprocess_path=args.preprocessed)
         result = search_engine.generate_results()
 
     elif args.task == 5:
-        context_finder = PersonContexts(question_num=5,
+        context_finder = PersonContexts(question_num=args.task,
                                         sentences_path=args.sentences,
                                         people_path=args.names,
                                         stopwords_path=args.removewords,
-                                        preprocess=args.preprocessed,
+                                        preprocess_path=args.preprocessed,
                                         N=args.maxk)
         result = context_finder.generate_results()
 
     elif args.task == 6:
-        direct_conn = DirectConnections(question_num=args.num,
+
+        direct_conn = DirectConnections(question_num=args.task,
                                         sentences_path=args.sentences,
-                                        people_path=args.people,
+                                        people_path=args.names,
                                         stopwords_path=args.removewords,
-                                        preprocess=args.preprocessed,
+                                        preprocess_path=args.preprocessed,
                                         window_size=args.windowsize,
                                         threshold=args.threshold)
         result = direct_conn.generate_results()
 
     elif args.task == 7:
-        indirect_conn = IndirectPaths(question_num=7,
-                                      data_file=args.preprocessed,
+        indirect_conn = IndirectPaths(question_num=args.task,
+                                      sentences_path=args.sentences,
+                                      people_path=args.names,
+                                      stopwords_path=args.removewords,
+                                      preprocess_path=args.preprocessed,
+                                      window_size=args.windowsize,
+                                      threshold=args.threshold,
                                       people_connections_path=args.pairs,
                                       maximal_distance=args.maximal_distance)
         result = indirect_conn.generate_results_task_7()
 
     elif args.task == 8:
-        fixed_length_paths = IndirectPaths(question_num=8,
-                                           data_file=args.preprocessed,
+        fixed_length_paths = IndirectPaths(question_num=args.task,
+                                           sentences_path=args.sentences,
+                                           people_path=args.names,
+                                           stopwords_path=args.removewords,
+                                           preprocess_path=args.preprocessed,
+                                           window_size=args.windowsize,
+                                           threshold=args.threshold,
                                            people_connections_path=args.pairs,
                                            K=args.fixed_length)
         result = fixed_length_paths.generate_results_task_8()
@@ -137,7 +154,7 @@ def main():
         sentence_cluster = SentenceClustering(question_num=9,
                                               sentences_path=args.sentences,
                                               stopwords_path=args.removewords,
-                                              preprocess=args.preprocessed,
+                                              preprocess_path=args.preprocessed,
                                               threshold=args.threshold,
                                               )
         result = sentence_cluster.generate_results()
@@ -152,7 +169,7 @@ def main():
     print(f"Results saved in {args.output}")
 
     # this is after I passed all the tests and deleted the output files
-    #print(json.dumps(result, indent=4))
+    print(json.dumps(result, indent=4))
 
 
 if __name__ == "__main__":

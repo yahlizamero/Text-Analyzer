@@ -1,14 +1,61 @@
 # Description: Helper functions for Tasks 2-9.
-#   In order to maintain a clean software.
+# In order to maintain a clean software.
 
 from typing import List, Dict, Any
 from collections import defaultdict
 import json
+import os
+import sys
 from task_implementation.Task_1_Preprocessing import Preprocessing
 
 
+# Used in Tasks: 2, 3, 4, 5, 6, 9
+def preprocess_init(preprocess_path: str = None,
+                    sentences_path: str = None,
+                    people_path: str = None,
+                    stopwords_path: str = None) -> dict[str, list[list[str]] | list[list[list[str]]]]:
+    """
+    Initialize data processing if preprocess flag is present or not.
+    :param preprocess_path: Path to the preprocessed JSON file (optional).
+    :param sentences_path: Path to the sentences CSV file.
+    :param people_path: Path to the people CSV file.
+    :param stopwords_path: Path to the stopwords CSV file.
+    :return: a list containing processed sentences and/or processed names.
+    """
+
+    # Load from preprocessed JSON if provided
+    if preprocess_path:
+        # Check if the preprocessed file exists and is not empty
+        if not os.path.exists(preprocess_path) or os.path.getsize(preprocess_path) == 0:
+            print(f"Error: The preprocessed file at {preprocess_path} is missing or empty.")
+            sys.exit(1)
+        try:
+            with open(preprocess_path, "r") as file:
+                preprocess = json.load(file)
+                return {
+                    "Processed Sentences": preprocess.get("Question 1", {}).get("Processed Sentences", []),
+                    "Processed Names": preprocess.get("Question 1", {}).get("Processed Names", [])
+                }
+        except Exception as e:
+            print(f"Error loading preprocessed file: {e}")
+            sys.exit(1)
+
+    # Preprocess from raw data using Preprocessing class
+    preprocessor = Preprocessing(sentences_path=sentences_path,
+                                 people_path=people_path,
+                                 stopwords_path=stopwords_path)
+
+    results = {}
+    if sentences_path:
+        results["Processed Sentences"] = preprocessor.preprocess_sentences()
+    if people_path:
+        results["Processed Names"] = preprocessor.preprocess_people()
+
+    return results  # A dictionary containing processed sentences and/or processed names.
+
+
 # Used in Task 4, 5 and 9
-def map_n_grams(sentences: List[List[str]], N: int) -> Dict[str, List[str]]:
+def map_n_grams(sentences: List[List[str]], N: int or None) -> defaultdict[Any, set]:
     """
     Map n-grams (word sequences) to the sentences they appear in.
     :param N: Length of the n-gram (optional).
@@ -21,7 +68,7 @@ def map_n_grams(sentences: List[List[str]], N: int) -> Dict[str, List[str]]:
 
     for sentence in sentences:
         sentence_text = " ".join(sentence)  # Combine the sentence tokens into a single string for easier processing
-        words = sentence_text.split()  # Split into words to generate n-grams
+        words = sentence_text.split()
 
         if not N:
             # Generate all possible n-grams (1-word to full sentence)
@@ -37,50 +84,3 @@ def map_n_grams(sentences: List[List[str]], N: int) -> Dict[str, List[str]]:
                     n_grams[ngram].add(tuple(sentence))  # Store the sentence that contains the k-seq
 
     return n_grams
-
-
-# Used in Task 7
-
-def preprocess_init(self,
-                    data_file: str = None,
-                    sentences_path: str = None,
-                    people_path: str = None,
-                    stopwords_path: str = None,
-                    preprocess: str = None) -> dict[str, Any] or None:
-    """
-    :param data:
-    :param self:
-    :param data_file:
-    :param sentences_path:
-    :param people_path:
-    :param stopwords_path:
-    :param preprocess:
-    :return: None
-    """
-
-    # If preprocess flag is set, load data directly from the preprocessed file
-    if preprocess == "--p":
-        if not data_file:
-            raise ValueError("A data file must be provided when preprocess=True.")
-        with open(data_file, "r") as file:
-            self.data = json.load(file)
-
-    # Otherwise, preprocess the raw input files
-    elif preprocess is None:
-        if not people_path:
-            if not sentences_path or not stopwords_path:
-                raise ValueError("Sentences and stopwords paths must be provided when preprocess=False.")
-            self.data = Preprocessing.preprocess_other_tasks(
-                sentences_path=sentences_path, stopwords_path=stopwords_path
-            )
-            return self.data
-        if not sentences_path or not stopwords_path:
-            raise ValueError("Sentences, people, and stopwords paths must be provided when preprocess=False.")
-        self.data = Preprocessing.preprocess_other_tasks(
-            sentences_path=sentences_path, stopwords_path=stopwords_path, people_path=people_path
-        )
-        return self.data
-    else:
-        raise ValueError("Invalid arguments provided for preprocessing.")
-
-

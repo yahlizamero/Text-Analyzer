@@ -1,4 +1,3 @@
-
 # Description: Implementation of Task 6 - Direct Connections.
 # This script finds direct connections between people based on shared contexts.
 # The DirectConnections class preprocesses the input data if necessary and generates the final results for Task 6.
@@ -6,9 +5,10 @@
 
 import json
 import re
+import sys
 from collections import defaultdict
 from typing import Dict, Any, List, Tuple
-from task_implementation.Task_1_Preprocessing import Preprocessing
+from utils.helper import preprocess_init
 
 
 class PersonNode:
@@ -63,11 +63,10 @@ class DirectConnections:
     def __init__(
             self,
             question_num: int,
-            data_file: str = None,
             sentences_path: str = None,
             people_path: str = None,
             stopwords_path: str = None,
-            preprocess: str = None,
+            preprocess_path: str = None,
             window_size: int = None,
             threshold: int = None
     ):
@@ -75,11 +74,10 @@ class DirectConnections:
         Initialize the DirectConnections class.
 
         :param question_num: The task reference number.
-        :param data_file: Path to the preprocessed JSON file (optional).
         :param sentences_path: Path to the sentences CSV file.
         :param people_path: Path to the people CSV file.
         :param stopwords_path: Path to the stopwords file.
-        :param preprocess: Flag indicating if preprocessing is required.
+        :param preprocess_path: Path to the preprocessed JSON file (optional).
         :param window_size: The size of the window to consider.
         :param threshold: The threshold to use for the direct connections.
         """
@@ -89,36 +87,26 @@ class DirectConnections:
         self.threshold = threshold
         self.graph = PersonGraph(self.threshold)
 
-        # Load preprocessed data or preprocess raw input files
-        if preprocess == "--p" and self.questions_num == 6:
-            if not data_file:
-                raise ValueError("A data file must be provided when preprocess=True.")
-            with open(data_file, "r") as file:
-                self.data = json.load(file)
-        elif preprocess is None:
-            if not sentences_path or not stopwords_path or not people_path and self.questions_num == 6:
-                raise ValueError("Sentences, people, and stopwords paths must be provided when preprocess=False.")
-            self.data = Preprocessing.preprocess_other_tasks(
-                sentences_path=sentences_path, stopwords_path=stopwords_path, people_path=people_path
-            )
-        else:
-            raise ValueError("Invalid arguments provided for preprocessing.")
+        # Load the preprocessed data or preprocess it from raw data
+        self.data = preprocess_init(preprocess_path, sentences_path, people_path, stopwords_path)
 
-        # Extract relevant processed data
-        self.processed_sentences = (
-            self.data.get("Question 1", {}).get("Processed Sentences", [])
-            if "Question 1" in self.data
-            else self.data.get("Processed Sentences", [])
-        )
+        # Extract processed data
+        self.processed_sentences = self.data.get("Processed Sentences", [])
+        self.processed_people = self.data.get("Processed Names", [])
 
-        self.processed_people = (
-            self.data.get("Question 1", {}).get("Processed Names", [])
-            if "Question 1" in self.data
-            else self.data.get("Processed Names", [])
-        )
+        self.validate_inputs()
 
-        if not self.processed_sentences or not self.processed_people:
-            raise ValueError("The provided data does not contain valid 'Processed Sentences' or 'Processed Names'.")
+    def validate_inputs(self):
+        """ Validate window size and threshold inputs. """
+        if self.window_size is None or self.window_size < 0:
+            print("Error: Window size (K) must be provided and non-negative.")
+            sys.exit(1)
+        if self.threshold is None or self.threshold < 0:
+            print("Error: Threshold (T) must be provided and non-negative.")
+            sys.exit(1)
+        if self.window_size > len(self.processed_sentences):
+            print("Error: Window size (K) cannot exceed the number of sentences.")
+            sys.exit(1)
 
     def create_nodes_with_aliases(self):
         """ Creates nodes with aliases and assigns them to the graph. """
@@ -132,8 +120,14 @@ class DirectConnections:
 
     def add_edges_from_co_occurrences(self):
         """ Adds edges to the graph based on co-occurrences in shared windows of sentences. """
+
+        # No edges if window size is 0 or threshold is greater than the number of sentences
+        if self.window_size == 0 or (self.threshold > len(self.processed_sentences) and self.window_size > 1):
+            return []
+
         name_to_sentences = defaultdict(set)
 
+        # Map names to the sentences they appear in
         for main_name, node in self.graph.nodes.items():
             for sentence in self.processed_sentences:
                 sentence_text = " ".join(sentence)
@@ -152,7 +146,6 @@ class DirectConnections:
             people_in_window = set()
             for sentence in window_sentences:
                 sentence_text = " ".join(sentence)
-
                 for main_name, node in self.graph.nodes.items():
                     if any(re.search(rf'\b{name}\b', sentence_text) for name in node.aliases):
                         people_in_window.add(main_name)
@@ -177,4 +170,3 @@ class DirectConnections:
                 "Pair Matches": self.graph.get_edges()
             }
         }
-
