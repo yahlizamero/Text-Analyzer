@@ -5,7 +5,7 @@
 
 from collections import defaultdict
 from typing import Dict, Any
-from utils.helper import preprocess_init
+from Utilities.helper import preprocess_init
 
 
 class PersonMentionCounter:

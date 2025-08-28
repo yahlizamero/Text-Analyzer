@@ -1,54 +1,79 @@
 
-## text_analyzer / Yahli Zamero ##
+################################ Text Analyzer – Long Documents & People Connections  ################################
 
-####################################################################################################################
-## Extensions:
+This project is a **text analysis tool** that processes long documents to uncover how people are mentioned, in what contexts, and how they are connected.  
 
-Task 8 - Fixed Length Indirect Connections
-Task 9 - Grouping Sentences
+It was developed as part of an academic project and demonstrates skills in:  
+- **Text preprocessing** (tokenization, stopword removal, normalization)  
+- **Word sequence (n-gram) analysis**  
+- **Entity recognition & mention counting**  
+- **Graph-based analysis of relationships**  
+- **Search engine–like functionality**  
 
-Task 8 - Fixed Length Indirect Connections: This extension builds upon Task 7 by finding indirect connections of an
-exact length (K) between people meaning there is a path of nodes where each node is a person that is of size k. I added
-a new function to the class that is explicit to task 8 that uses BFS to traverse the graph that was created using task 6.
-To implement this, a new function specific to Task 8 was added to the IndirectPaths class, (BFS) to explore all possible
-paths in the graph created from Task 6. The BFS algorithm is modified to continue exploring paths until it reaches
-exactly K edges; paths shorter or longer than K are discarded. I used BFS for this task because it efficiently explores
-all possible paths level by level, making it ideal for finding indirect connections of an exact length K while ensuring
-the shortest and most comprehensive traversal of the graph.
+Imagine having thousands of pages of diaries, interview transcripts, or historical reports.
+This tool helps you **see patterns, counts, and connections between individuals** quickly.  
 
-Task 9 - Grouping Sentences: I chose to extend the project with Task 9 because grouping sentences based on shared content
-complements the network analysis from Tasks 6, 7, and 8. This extension clusters sentences based on shared words,
-revealing similar themes in groups of sentences within the text. In order to implement this task, I created a new class
-that either receives the output of Task 1 (processed) or receives raw files. The class then creates an adjacency list of
-the graph of sentences based on the processed sentence data. Each edge between sentences is if they have the identical
-words that is above a certain threshold (parameter). Then uses BFS to traverse the graph where each node is a sentences
-and groups sentences based on each sentence's neighbor i.e. shared words in the sentences. The output is a JSON file that
-contains the grouped sentences.
+---
 
-####################################################################################################################
+## Features:  
 
-## Design:
+1. **Initial Text Preprocessing**  
+   - Converts text to lowercase, removes punctuation and stopwords, and normalizes whitespace.  
+   - Cleans and prepares both sentence data and people’s names (including nicknames).  
 
-I divided each task in the project into a separate class to encapsulate the logic and data specific to that task. Each
-class contains methods for reading input data, processing it, and generating the output in the required format. This
-design allows for easy review of the project with it being more cleaner and modular, as well as the fact that each new
-task can be implemented in a separate class without affecting the existing codebase.
+2. **Counting Word Sequences (K-seqs)**  
+   - Counts all n-grams up to a specified length `N`.  
+   - Example: 1-seq (words), 2-seq (pairs), 3-seq (triplets).  
 
-With that in mind, I grouped Task 7 and Task 8 into the same class because both tasks share the core functionality of
-graph traversal using BFS. They also receive the same parameters beside the maximal distance and the k, wheres Task 7
-stops when the maximal distance is reached and Task 8 stops when paths of exactly length K are found. By unifying them
-into a single class, I reduced code duplication and streamlined maintenance, allowing flexible implementation to handle
-both cases efficiently.
+3. **Counting Person Mentions**  
+   - Tracks how often each person appears (main name + alternate nicknames).  
 
-In addition, I added a Utils file that includes:
+4. **Basic Search Engine Functionality**  
+   - Finds sentences containing specific k-sequences.  
+   - Search runs in **O(1)** time using dictionary-based structures.  
 
-- helper file: Includes the preprocess_init function that is used in most of the tasks because it allows to deal
-with both cases of receiving either a preprocessed file or the raw data files. It also includes the function that maps
-n grams which was used both in task 4 and task 5
+5. **Contexts of People & K-seqs**  
+   - Identifies the word sequences that appear in the same sentences as each person.  
 
-- tests file: Includes the tests for all of the tasks and the helper task functions in the main file. The tests are
-written using the unittest library and pytest for coverage. In the test files since the requirements were not to provide
-actual files, I used the mock library to mock the file's behavior and the data that is being read from them according to
- the task.
+6. **Direct Connections Between People**  
+   - Builds a graph where nodes are people and edges are co-occurrence within sliding sentence windows.  
 
+7. **Indirect Connections**  
+   - Determines whether people are connected via intermediate nodes (friends-of-friends).  
 
+8. **Fixed-Length Path Analysis (Extension)**  
+   - Checks whether two people are connected by a path of exactly `K` steps.  
+
+9. **Sentence Grouping by Shared Words (Extension)**  
+   - Groups sentences into clusters based on overlapping words.  
+
+---
+
+## Tech Stack: 
+
+- ** Language: ** Python 3  
+- ** Core Libraries: ** `argparse`, `json`, `csv`  
+- ** Not Allowed (challenge rule): ** No use of advanced graph libraries like `networkx` or `scikit-learn` — all graph and search algorithms are implemented from scratch.  
+
+---
+
+## Project Structure:
+
+text_analyzer/
+│── main.py                # Entry point for running tasks
+│── Data - example/        # Data format examples
+│── Utilities/             # Helper and test functions for preprocessing & analysis
+│── Examples/              # Sample input/output files for each task
+│── Task_Implementation/   # Implementation of 9 text processors task
+│── README.md              # Project documentation
+
+---
+
+## Usage:  
+
+Run the program with command-line arguments.  
+**Example – Task 6 (Finding Direct Connections):**  
+```bash
+python3 main.py -t 6 -s data/sentences.csv -p data/people.csv -r data/remove.csv --windowsize 4 --threshold 2
+
+Output is always printed in JSON format, sorted for readability.

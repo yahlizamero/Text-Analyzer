@@ -5,7 +5,7 @@
 from typing import Dict, Any
 import sys
 from collections import defaultdict
-from utils.helper import map_n_grams, preprocess_init
+from Utilities.helper import map_n_grams, preprocess_init
 
 
 class PersonContexts:

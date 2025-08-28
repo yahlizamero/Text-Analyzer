@@ -9,7 +9,7 @@ import json
 import sys
 from typing import Dict, Any, List
 from collections import defaultdict
-from utils.helper import map_n_grams, preprocess_init
+from Utilities.helper import map_n_grams, preprocess_init
 
 
 class SearchEngine:

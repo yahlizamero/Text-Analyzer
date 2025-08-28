@@ -8,7 +8,7 @@ import sys
 import collections
 from typing import List, Dict, Any
 from itertools import combinations
-from utils.helper import preprocess_init
+from Utilities.helper import preprocess_init
 
 
 class SentenceGraph:

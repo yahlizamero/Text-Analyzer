@@ -6,7 +6,7 @@
 from collections import defaultdict
 import sys
 from typing import Dict, Any
-from utils.helper import preprocess_init
+from Utilities.helper import preprocess_init
 
 
 class SequenceCounter:

@@ -7,7 +7,7 @@ import re
 import sys
 from collections import defaultdict
 from typing import Dict, Any, List
-from utils.helper import preprocess_init
+from Utilities.helper import preprocess_init
 
 
 class PersonNode:

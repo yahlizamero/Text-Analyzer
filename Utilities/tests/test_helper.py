@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, mock_open
 from collections import defaultdict
-from utils.helper import preprocess_init, map_n_grams
+from Utilities.helper import preprocess_init, map_n_grams
 
 
 class TestHelperFunctions(unittest.TestCase):
