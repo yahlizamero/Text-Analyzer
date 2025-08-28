@@ -1,2 +1,6 @@
 .DS_Store
-
+.vscode
+.coverage
+.venv
+.idea
+final_project.zip
